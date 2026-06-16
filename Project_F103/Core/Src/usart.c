@@ -79,7 +79,7 @@ void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -296,7 +296,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 	}
 	if (huart->Instance == USART2)
 	{
-		//IAP_RxProcess(gU2RxBuf,Size);
 		HAL_UARTEx_ReceiveToIdle_DMA(&huart2,gU2RxBuf,U2BUF_MAXSIZE);
 	}
 }

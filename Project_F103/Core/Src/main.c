@@ -28,179 +28,40 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "delay.h"
-#include "AT24Cxx.h"
-#include "NM25Qxx.h"
-#include "IAP.h"
-#include "OV7725.h"
-#include "LCD.h"
-#include "LF0038.h"
-#include "rgb_led.h"
+#include "task_manage.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "W011";
+const char SoftWareID[] = "W012";
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TASK_PERIOD_500US     1
-#define TASK_PERIOD_1MS       1
-#define TASK_PERIOD_2MS       2
-#define TASK_PERIOD_5MS       5
-#define TASK_PERIOD_10MS      10
-
-#define TASK_PERIOD_20MS      20
-#define TASK_PERIOD_50MS      50
-#define TASK_PERIOD_100MS     100
-#define TASK_PERIOD_500MS     500
-#define TASK_PERIOD_1000MS    1000
-
 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define IWDG_ENBALE 0
+
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-volatile uint32_t SystemRunTime_1ms = 0;
-volatile uint64_t SystemRunTime_500us = 0;
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void Error_Handler(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint32_t GetTick_1ms(void)
-{
-  return SystemRunTime_1ms;
-}
-uint64_t GetTick_500us(void)
-{
-  return SystemRunTime_500us;
-}
 
-void Task_500us()
-{
-	
-}
-void Task_1ms()
-{
-	IAP_Cyclic();
-}
-void Task_2ms()
-{
-
-}
-void Task_5ms()
-{
-
-}
-void Task_10ms()
-{
-	RGB_RainbowTask();
-}
-void Task_20ms()
-{	
-
-}
-void Task_50ms()
-{
-	
-}
-void Task_100ms()
-{
-	
-}
-void Task_500ms()
-{
-	//LED1_TOGGLE;
-}
-void Task_1000ms()
-{
-	LED0_TOGGLE;
-	//BEEP_TOGGLE;
-#if IWDG_ENBALE
-	HAL_IWDG_Refresh(&hiwdg);
-#endif
-}
-
-void TaskSchedule()
-{
-	static uint64_t startValue_500us = 0;
-    static uint32_t startValue_1ms = 0;
-    static uint32_t startValue_2ms = 0;
-    static uint32_t startValue_5ms = 0;
-    static uint32_t startValue_10ms = 0;
-    static uint32_t startValue_20ms = 0;
-    static uint32_t startValue_50ms = 0;
-    static uint32_t startValue_100ms = 0;
-    static uint32_t startValue_500ms = 0;
-    static uint32_t startValue_1000ms = 0;
-    if (GetTick_500us() - startValue_500us >= TASK_PERIOD_500US)
-    {
-        startValue_500us = GetTick_500us();
-        Task_500us();
-    }
-    if (GetTick_1ms() - startValue_1ms >= TASK_PERIOD_1MS)
-    {
-        startValue_1ms = GetTick_1ms();
-        Task_1ms();
-    }
-    if (GetTick_1ms() - startValue_2ms >= TASK_PERIOD_2MS)
-    {
-    	startValue_2ms = GetTick_1ms();
-        Task_2ms();
-    }
-    if (GetTick_1ms() - startValue_5ms >= TASK_PERIOD_5MS)
-    {
-    	startValue_5ms = GetTick_1ms();
-        Task_5ms();
-    }
-    if (GetTick_1ms() - startValue_10ms >= TASK_PERIOD_10MS)
-    {
-    	startValue_10ms = GetTick_1ms();
-        Task_10ms();
-    }
-    if (GetTick_1ms() - startValue_20ms >= TASK_PERIOD_20MS)
-    {
-    	startValue_20ms = GetTick_1ms();
-        Task_20ms();
-    }
-    if (GetTick_1ms() - startValue_50ms >= TASK_PERIOD_50MS)
-    {
-    	startValue_50ms = GetTick_1ms();
-        Task_50ms();
-    }
-    if (GetTick_1ms() - startValue_100ms >= TASK_PERIOD_100MS)
-    {
-    	startValue_100ms = GetTick_1ms();
-        Task_100ms();
-    }
-    if (GetTick_1ms() - startValue_500ms >= TASK_PERIOD_500MS)
-    {
-    	startValue_500ms = GetTick_1ms();
-        Task_500ms();
-    }
-    if (GetTick_1ms() - startValue_1000ms >= TASK_PERIOD_1000MS)
-    {
-        startValue_1000ms = GetTick_1ms();
-	    Task_1000ms();
-    }
-
-}
 /* USER CODE END 0 */
 
 /**
@@ -211,7 +72,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  SCB->VTOR = APP_START_ADDRESS;
+
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -238,24 +99,26 @@ int main(void)
   MX_SPI2_Init();
   MX_USART2_UART_Init();
   MX_FSMC_Init();
-  MX_TIM6_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim6);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1,gU1RxBuf,U1BUF_MAXSIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2,gU2RxBuf,U2BUF_MAXSIZE);
   DWT_Init();
   AT24Cxx_Init();
   Flash_Init();
   RGB_Init();
+  OV7725_Init();
+  LCD_Init();
+
+  RootTaskCreate(NULL);
+  vTaskStartScheduler();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    TaskSchedule();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -307,6 +170,28 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM6 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM6)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

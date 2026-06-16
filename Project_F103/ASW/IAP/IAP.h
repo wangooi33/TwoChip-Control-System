@@ -29,7 +29,7 @@ typedef struct
 } IAP_Info_t;
 
 /* functions prototypes -----------------------------------------------------*/
-void IAP_Cyclic(void);
+void Task2_IAP(void *pvParameters);
 void IAP_RxProcess(uint8_t *pData, uint16_t Size);
 
 #endif

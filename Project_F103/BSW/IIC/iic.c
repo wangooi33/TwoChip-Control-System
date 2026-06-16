@@ -2,19 +2,7 @@
 
 void IIC_Init(void)
 {
-    GPIO_InitTypeDef GPIOInit_St;
 
-    IIC_SCL_GPIO_CLK_ENABLE();
-    IIC_SDA_GPIO_CLK_ENABLE();
-
-    GPIOInit_St.Pin = IIC_SCL_GPIO_PIN;
-    GPIOInit_St.Mode = GPIO_MODE_OUTPUT_OD;
-    GPIOInit_St.Pull = GPIO_PULLUP;
-    GPIOInit_St.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(IIC_SCL_GPIO_PORT, &GPIOInit_St);
-
-    GPIOInit_St.Pin = IIC_SDA_GPIO_PIN;
-    HAL_GPIO_Init(IIC_SDA_GPIO_PORT, &GPIOInit_St);
 }
 
 static void IIC_Delay(void)

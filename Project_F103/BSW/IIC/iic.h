@@ -6,32 +6,22 @@ extern "C" {
 #endif
 
 /* includes -----------------------------------------------------------------*/
-#include "stm32f1xx_hal.h"
+#include "main.h"
 #include <stdint.h>
 
 /* macro --------------------------------------------------------------------*/
 
-/* SCL */
-#define IIC_SCL_GPIO_PORT         GPIOB
-#define IIC_SCL_GPIO_PIN          GPIO_PIN_6
-#define IIC_SCL_GPIO_CLK_ENABLE() __HAL_RCC_GPIOB_CLK_ENABLE()
-
-/* SDA */
-#define IIC_SDA_GPIO_PORT         GPIOB
-#define IIC_SDA_GPIO_PIN          GPIO_PIN_7
-#define IIC_SDA_GPIO_CLK_ENABLE() __HAL_RCC_GPIOB_CLK_ENABLE()
-
 #define IIC_SCL(x)        do{ x ? \
-                              HAL_GPIO_WritePin(IIC_SCL_GPIO_PORT, IIC_SCL_GPIO_PIN, GPIO_PIN_SET) : \
-                              HAL_GPIO_WritePin(IIC_SCL_GPIO_PORT, IIC_SCL_GPIO_PIN, GPIO_PIN_RESET); \
-                          }while(0)       /* SCL */
+                              HAL_GPIO_WritePin(IIC_SCL_GPIO_Port, IIC_SCL_Pin, GPIO_PIN_SET) :  \
+                              HAL_GPIO_WritePin(IIC_SCL_GPIO_Port, IIC_SCL_Pin, GPIO_PIN_RESET); \
+                          }while(0)
 
 #define IIC_SDA(x)        do{ x ? \
-                              HAL_GPIO_WritePin(IIC_SDA_GPIO_PORT, IIC_SDA_GPIO_PIN, GPIO_PIN_SET) : \
-                              HAL_GPIO_WritePin(IIC_SDA_GPIO_PORT, IIC_SDA_GPIO_PIN, GPIO_PIN_RESET); \
-                          }while(0)       /* SDA */
+                              HAL_GPIO_WritePin(IIC_SDA_GPIO_Port, IIC_SDA_Pin, GPIO_PIN_SET) :  \
+                              HAL_GPIO_WritePin(IIC_SDA_GPIO_Port, IIC_SDA_Pin, GPIO_PIN_RESET); \
+                          }while(0)
 
-#define IIC_READ_SDA()     HAL_GPIO_ReadPin(IIC_SDA_GPIO_PORT, IIC_SDA_GPIO_PIN)
+#define IIC_READ_SDA()     HAL_GPIO_ReadPin(IIC_SDA_GPIO_Port, IIC_SDA_Pin)
 
 
 /* functions prototypes -----------------------------------------------------*/

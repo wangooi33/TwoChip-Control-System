@@ -3,15 +3,7 @@
 
 void SCCB_Init(void)
 {
-    GPIO_InitTypeDef GPIOInit_St;
-    GPIOInit_St.Mode = GPIO_MODE_OUTPUT_OD;
-    GPIOInit_St.Pull  =GPIO_PULLUP;
-    GPIOInit_St.Speed = GPIO_SPEED_FREQ_HIGH;
 
-    GPIOInit_St.Pin = SCCB_SCL_GPIO_PIN;
-    HAL_GPIO_Init(SCCB_SCL_GPIO_PORT, &GPIOInit_St);
-    GPIOInit_St.Pin = SCCB_SDA_GPIO_PIN;
-    HAL_GPIO_Init(SCCB_SDA_GPIO_PORT, &GPIOInit_St);
 }
 void SCCB_Delay(void)
 {

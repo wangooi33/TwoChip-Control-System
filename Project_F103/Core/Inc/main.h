@@ -31,6 +31,11 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "FreeRTOS.h"
+#include "task.h"
+#include "list.h"
+#include "queue.h"
+#include "timers.h"
 
 /* USER CODE END Includes */
 
@@ -47,16 +52,13 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
-extern volatile uint32_t SystemRunTime_1ms;
-extern volatile uint64_t SystemRunTime_500us;
-
+#define IWDG_ENABLE 1
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-void Error_Handler(void);
 
 /* USER CODE END EFP */
 
@@ -67,10 +69,49 @@ void Error_Handler(void);
 #define KEY0_GPIO_Port GPIOE
 #define LED1_Pin GPIO_PIN_5
 #define LED1_GPIO_Port GPIOE
+#define OV7725_D0_Pin GPIO_PIN_0
+#define OV7725_D0_GPIO_Port GPIOC
+#define OV7725_D1_Pin GPIO_PIN_1
+#define OV7725_D1_GPIO_Port GPIOC
+#define OV7725_D2_Pin GPIO_PIN_2
+#define OV7725_D2_GPIO_Port GPIOC
+#define OV7725_D3_Pin GPIO_PIN_3
+#define OV7725_D3_GPIO_Port GPIOC
 #define KEY_UP_Pin GPIO_PIN_0
 #define KEY_UP_GPIO_Port GPIOA
+#define OV7725_D4_Pin GPIO_PIN_4
+#define OV7725_D4_GPIO_Port GPIOC
+#define OV7725_D5_Pin GPIO_PIN_5
+#define OV7725_D5_GPIO_Port GPIOC
+#define NORFLASH_CS_Pin GPIO_PIN_12
+#define NORFLASH_CS_GPIO_Port GPIOB
+#define OV7725_D6_Pin GPIO_PIN_6
+#define OV7725_D6_GPIO_Port GPIOC
+#define OV7725_D7_Pin GPIO_PIN_7
+#define OV7725_D7_GPIO_Port GPIOC
+#define OV7725_VSYNC_Pin GPIO_PIN_8
+#define OV7725_VSYNC_GPIO_Port GPIOA
+#define OV7725_VSYNC_EXTI_IRQn EXTI9_5_IRQn
+#define SCCB_SCL_Pin GPIO_PIN_3
+#define SCCB_SCL_GPIO_Port GPIOD
+#define OV7725_WRST_Pin GPIO_PIN_6
+#define OV7725_WRST_GPIO_Port GPIOD
+#define SCCB_SDA_Pin GPIO_PIN_13
+#define SCCB_SDA_GPIO_Port GPIOG
+#define OV7725_RRST_Pin GPIO_PIN_14
+#define OV7725_RRST_GPIO_Port GPIOG
+#define OV7725_OE_Pin GPIO_PIN_15
+#define OV7725_OE_GPIO_Port GPIOG
+#define OV7725_WEN_Pin GPIO_PIN_3
+#define OV7725_WEN_GPIO_Port GPIOB
+#define OV7725_RCLK_Pin GPIO_PIN_4
+#define OV7725_RCLK_GPIO_Port GPIOB
 #define LED0_Pin GPIO_PIN_5
 #define LED0_GPIO_Port GPIOB
+#define IIC_SCL_Pin GPIO_PIN_6
+#define IIC_SCL_GPIO_Port GPIOB
+#define IIC_SDA_Pin GPIO_PIN_7
+#define IIC_SDA_GPIO_Port GPIOB
 #define BEEP_Pin GPIO_PIN_8
 #define BEEP_GPIO_Port GPIOB
 
