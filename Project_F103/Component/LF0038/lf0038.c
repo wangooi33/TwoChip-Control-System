@@ -2,6 +2,7 @@
 #include "task_manage.h"
 #include "ov7725.h"
 #include "lcd_cfg.h"
+#include "tjc.h"
 
 /* global variable ----------------------------------------------------------*/
 volatile InfraredCtrl_Info_t InfraredCtrl_Info = {0};
@@ -119,8 +120,37 @@ void Task3_InfraredScan(void *pvParameters)
 					}
 					break;
 
-				case InfraredCtrl_Cmd_Power:
-					
+				case InfraredCtrl_Cmd_Left:
+					if (TJC_Info.CurrentPage <= 0)
+					{
+						TJC_ChangePage(0);
+					}
+					else
+					{
+						TJC_ChangePage(--TJC_Info.CurrentPage);
+					}
+					break;
+				case InfraredCtrl_Cmd_Right:
+					if (TJC_Info.CurrentPage < TJC_MAX_PAGENUM)
+					{
+						TJC_ChangePage(++TJC_Info.CurrentPage);
+					}
+					else
+					{
+						TJC_ChangePage(TJC_MAX_PAGENUM);
+					}
+					break;
+				case InfraredCtrl_Cmd_Play:
+					if (TJC_Info.Videoisplay)
+					{
+						TJC_ChangeVideoState(0,2);
+						TJC_Info.Videoisplay = 0;
+					}
+					else
+					{
+						TJC_ChangeVideoState(0,1);
+						TJC_Info.Videoisplay = 1;
+					}
 					break;
 					
 				default:

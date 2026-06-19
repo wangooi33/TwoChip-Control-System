@@ -34,7 +34,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "W013";
+const char SoftWareID[] = "W014";
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -101,15 +101,20 @@ int main(void)
   MX_FSMC_Init();
   MX_TIM4_Init();
   MX_TIM3_Init();
+  MX_TIM1_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1,gU1RxBuf,U1BUF_MAXSIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2,gU2RxBuf,U2BUF_MAXSIZE);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart3,gU3RxBuf,U3BUF_MAXSIZE);
+  HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_4);
   DWT_Init();
   AT24Cxx_Init();
   Flash_Init();
   RGB_Init();
   OV7725_Init();
   LCD_Init();
+  TJC_Init();
 
   RootTaskCreate(NULL);
   vTaskStartScheduler();

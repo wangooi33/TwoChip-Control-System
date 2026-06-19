@@ -45,7 +45,7 @@ void RGB_SetColor(uint8_t r, uint8_t g, uint8_t b)
 
     TIM3->CCR1 = ccr_r;
     TIM3->CCR2 = ccr_g;
-    TIM3->CCR4 = ccr_b;
+    TIM1->CCR4 = ccr_b;
 }
 RGB_t HSV2RGB(float h, float s, float v)
 {
@@ -116,7 +116,7 @@ void RGB_Init(void)
 {
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 	RGB_BreathInit(&Breath1);
 }
 void RGB_BreathTask(RGB_Breath_t *breath, RGB_t color)

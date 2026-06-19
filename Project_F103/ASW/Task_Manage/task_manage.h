@@ -2,6 +2,7 @@
 #define __TASK_MANAGE_H
 /* includes -----------------------------------------------------------------*/
 #include "main.h"
+#include "usart.h"
 #include "delay.h"
 #include "at24Cxx.h"
 #include "nm25Qxx.h"
@@ -10,7 +11,7 @@
 #include "lcd.h"
 #include "lf0038.h"
 #include "rgb_led.h"
-#include "usart.h"
+#include "tjc.h"
 
 /* macro --------------------------------------------------------------------*/
 
@@ -24,6 +25,7 @@ typedef struct
 	TaskHandle_t Task2_IAPHandle;
 	TaskHandle_t Task3_IRCtrlHandle;
 	TaskHandle_t Task4_CameraHandle;
+	TaskHandle_t Task5_IWDGHandle;
 }wTaskHandle_st;
 
 /* global variable ----------------------------------------------------------*/

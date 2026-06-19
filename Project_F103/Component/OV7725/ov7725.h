@@ -7,36 +7,36 @@
 
 /* macro --------------------------------------------------------------------*/
 
-#define OV7725_WRST(x)                      do{ x ?                                                                          \
-                                                HAL_GPIO_WritePin(OV7725_WRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_SET) :    \
-                                                HAL_GPIO_WritePin(OV7725_WRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_RESET);   \
-                                            }while(0)
-                                                
-#define OV7725_RRST(x)                      do{ x ?                                                                          \
-                                                HAL_GPIO_WritePin(OV7725_RRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_SET) :    \
-                                                HAL_GPIO_WritePin(OV7725_RRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_RESET);   \
-                                            }while(0)
-                                                
-#define OV7725_OE(x)                        do{ x ?                                                                          \
-                                                HAL_GPIO_WritePin(OV7725_OE_GPIO_Port, OV7725_OE_Pin, GPIO_PIN_SET) :        \
-                                                HAL_GPIO_WritePin(OV7725_OE_GPIO_Port, OV7725_OE_Pin, GPIO_PIN_RESET);       \
-                                            }while(0)
-                                                
-#define OV7725_RCLK(x)                     do{ x ?                                                             \
-                                                (OV7725_RCLK_GPIO_Port->BSRR = (uint32_t)OV7725_RCLK_Pin) :    \
-                                                (OV7725_RCLK_GPIO_Port->BRR = (uint32_t)OV7725_RCLK_Pin);      \
-                                            }while(0)
-                                                
-#define OV7725_WEN(x)                       do{ x ?                                                                          \
-                                                HAL_GPIO_WritePin(OV7725_WEN_GPIO_Port, OV7725_WEN_Pin, GPIO_PIN_SET) :      \
-                                                HAL_GPIO_WritePin(OV7725_WEN_GPIO_Port, OV7725_WEN_Pin, GPIO_PIN_RESET);     \
-                                            }while(0)
+#define OV7725_WRST(x)            do{ x ?                                                                          \
+                                      HAL_GPIO_WritePin(OV7725_WRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_SET) :    \
+                                      HAL_GPIO_WritePin(OV7725_WRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_RESET);   \
+                                  }while(0)
+                                      
+#define OV7725_RRST(x)            do{ x ?                                                                          \
+                                      HAL_GPIO_WritePin(OV7725_RRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_SET) :    \
+                                      HAL_GPIO_WritePin(OV7725_RRST_GPIO_Port, OV7725_RRST_Pin, GPIO_PIN_RESET);   \
+                                  }while(0)
+                                      
+#define OV7725_OE(x)              do{ x ?                                                                          \
+                                      HAL_GPIO_WritePin(OV7725_OE_GPIO_Port, OV7725_OE_Pin, GPIO_PIN_SET) :        \
+                                      HAL_GPIO_WritePin(OV7725_OE_GPIO_Port, OV7725_OE_Pin, GPIO_PIN_RESET);       \
+                                  }while(0)
+                                      
+#define OV7725_RCLK(x)           do{ x ?                                                             \
+                                      (OV7725_RCLK_GPIO_Port->BSRR = (uint32_t)OV7725_RCLK_Pin) :    \
+                                      (OV7725_RCLK_GPIO_Port->BRR = (uint32_t)OV7725_RCLK_Pin);      \
+                                  }while(0)
+                                      
+#define OV7725_WEN(x)             do{ x ?                                                                          \
+                                      HAL_GPIO_WritePin(OV7725_WEN_GPIO_Port, OV7725_WEN_Pin, GPIO_PIN_SET) :      \
+                                      HAL_GPIO_WritePin(OV7725_WEN_GPIO_Port, OV7725_WEN_Pin, GPIO_PIN_RESET);     \
+                                  }while(0)
 
 //分辨率
-#define OV7725_VGA_WIDTH_MAX                640
-#define OV7725_VGA_HEIGHT_MAX               480
-#define OV7725_QVGA_WIDTH_MAX               320
-#define OV7725_QVGA_HEIGHT_MAX              240
+#define OV7725_VGA_WIDTH_MAX      640
+#define OV7725_VGA_HEIGHT_MAX     480
+#define OV7725_QVGA_WIDTH_MAX     320
+#define OV7725_QVGA_HEIGHT_MAX    240
 
 /* enum ---------------------------------------------------------------------*/
 /* 灯光模式 */

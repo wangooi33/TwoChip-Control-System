@@ -69,6 +69,10 @@ void Error_Handler(void);
 #define KEY0_GPIO_Port GPIOE
 #define LED1_Pin GPIO_PIN_5
 #define LED1_GPIO_Port GPIOE
+#define TOUCH_SPI_MO_Pin GPIO_PIN_9
+#define TOUCH_SPI_MO_GPIO_Port GPIOF
+#define TOUCH_PEN_Pin GPIO_PIN_10
+#define TOUCH_PEN_GPIO_Port GPIOF
 #define OV7725_D0_Pin GPIO_PIN_0
 #define OV7725_D0_GPIO_Port GPIOC
 #define OV7725_D1_Pin GPIO_PIN_1
@@ -83,6 +87,12 @@ void Error_Handler(void);
 #define OV7725_D4_GPIO_Port GPIOC
 #define OV7725_D5_Pin GPIO_PIN_5
 #define OV7725_D5_GPIO_Port GPIOC
+#define TOUCH_SPI_CLK_Pin GPIO_PIN_1
+#define TOUCH_SPI_CLK_GPIO_Port GPIOB
+#define TOUCH_SPI_MI_Pin GPIO_PIN_2
+#define TOUCH_SPI_MI_GPIO_Port GPIOB
+#define TOUCH_SPI_CS_Pin GPIO_PIN_11
+#define TOUCH_SPI_CS_GPIO_Port GPIOF
 #define NORFLASH_CS_Pin GPIO_PIN_12
 #define NORFLASH_CS_GPIO_Port GPIOB
 #define OV7725_D6_Pin GPIO_PIN_6

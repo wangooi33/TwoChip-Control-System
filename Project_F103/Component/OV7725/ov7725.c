@@ -97,8 +97,7 @@ void OV7725_Init(void)
     OV7725_HWInit();
     SCCB_Init();
     OV7725_SCCBRegReset();
-    if (OV7725_MID != OV7725_GetMID()
-        || OV7725_PID != OV7725_GetPID())
+    if (OV7725_MID != OV7725_GetMID() || OV7725_PID != OV7725_GetPID())
     {
         return;
     }
@@ -464,12 +463,14 @@ void Task4_Camera(void *pvParameters)
 {
 	OV7725_SetMode();
 	OV7725_EnableOutput();
-	LCD_SetDisplayDir(0,TopToBottom_LeftToRight);
-	LCD_SetWindow(0,0,LCD_Info.Width,LCD_Info.Height);
 	LCD_DisplayON();
 	LCD_WriteREGNo(LCD_Command_MemoryWrite);
 	for(;;)
 	{
+		ulTaskNotifyTake(pdTRUE,portMAX_DELAY);
+		OV7725_WRST(0);
+		OV7725_WEN(1);
+		OV7725_WRST(1);
 		OV7725_GetFrame(&(LCD->LCD_RAM),OV7725_GET_FRAME_TYPE_NOINC);
 	}
 }

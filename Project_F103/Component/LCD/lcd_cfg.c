@@ -1,6 +1,14 @@
-#include "LCD_cfg.h"
+#include "lcd_cfg.h"
 #include "delay.h"
 #include "tim.h"
+
+/* macro --------------------------------------------------------------------*/
+//原始ADC值采样次数
+#define TOUCH_SAMPLES_Cnt			5
+//每边丢弃的个数(最大和最小各丢弃1个)
+#define TOUCH_FILTER_Cnt			1
+//差值
+#define TOUCH_FILTER_DELTA			50
 
 /* global variable ----------------------------------------------------------*/
 LCD_Info_t LCD_Info;
@@ -43,115 +51,106 @@ static void LCD_ReadID4(void)
 {
 	LCD_WriteREGNo(LCD_Command_ReadID4);
 	LCD_Info.ID = LCD_ReadData();	/* dummy read */
-	LCD_Info.ID = LCD_ReadData();  	/* 读到0X00 */
-	LCD_Info.ID = LCD_ReadData();  	/* 读取0X93 */
+	LCD_Info.ID = LCD_ReadData();  	/* 读到0X85 */
+	LCD_Info.ID = LCD_ReadData();  	/* 读取0X85 */
 	LCD_Info.ID <<= 8;
-	LCD_Info.ID |= LCD_ReadData(); 	/* 读取0X41 */
+	LCD_Info.ID |= LCD_ReadData(); 	/* 读取0X52 */
+	if (LCD_Info.ID == 0x8552)
+	{
+		LCD_Info.ID = 0x7789;		/* ST7789 */
+	}
+}
+static void ST7789_RegInit(void)
+{
+	LCD_WriteREGNo(0x11);
+	Delay_ms(120); 
+
+	LCD_WriteREGNo(0x36);
+	LCD_WriteRAM(0x00);
+
+	LCD_WriteREGNo(0x3A);
+	LCD_WriteRAM(0X05);
+
+	LCD_WriteREGNo(0xB2);
+	LCD_WriteRAM(0x0C);
+	LCD_WriteRAM(0x0C);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0x33);
+	LCD_WriteRAM(0x33);
+
+	LCD_WriteREGNo(0xB7);
+	LCD_WriteRAM(0x35);
+
+	LCD_WriteREGNo(0xBB); /* vcom */
+	LCD_WriteRAM(0x32);  /* 30 */
+
+	LCD_WriteREGNo(0xC0);
+	LCD_WriteRAM(0x0C);
+
+	LCD_WriteREGNo(0xC2);
+	LCD_WriteRAM(0x01);
+
+	LCD_WriteREGNo(0xC3); /* vrh */
+	LCD_WriteRAM(0x10);  /* 17 0D */
+
+	LCD_WriteREGNo(0xC4); /* vdv */
+	LCD_WriteRAM(0x20);  /* 20 */
+
+	LCD_WriteREGNo(0xC6);
+	LCD_WriteRAM(0x0f);
+
+	LCD_WriteREGNo(0xD0);
+	LCD_WriteRAM(0xA4); 
+	LCD_WriteRAM(0xA1); 
+
+	LCD_WriteREGNo(0xE0); /* Set Gamma  */
+	LCD_WriteRAM(0xd0);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0x02);
+	LCD_WriteRAM(0x07);
+	LCD_WriteRAM(0x0a);
+	LCD_WriteRAM(0x28);
+	LCD_WriteRAM(0x32);
+	LCD_WriteRAM(0X44);
+	LCD_WriteRAM(0x42);
+	LCD_WriteRAM(0x06);
+	LCD_WriteRAM(0x0e);
+	LCD_WriteRAM(0x12);
+	LCD_WriteRAM(0x14);
+	LCD_WriteRAM(0x17);
+
+	LCD_WriteREGNo(0XE1);  /* Set Gamma */
+	LCD_WriteRAM(0xd0);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0x02);
+	LCD_WriteRAM(0x07);
+	LCD_WriteRAM(0x0a);
+	LCD_WriteRAM(0x28);
+	LCD_WriteRAM(0x31);
+	LCD_WriteRAM(0x54);
+	LCD_WriteRAM(0x47);
+	LCD_WriteRAM(0x0e);
+	LCD_WriteRAM(0x1c);
+	LCD_WriteRAM(0x17);
+	LCD_WriteRAM(0x1b); 
+	LCD_WriteRAM(0x1e);
+
+	LCD_WriteREGNo(0x2A);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0xef);
+
+	LCD_WriteREGNo(0x2B);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0x00);
+	LCD_WriteRAM(0x01);
+	LCD_WriteRAM(0x3f);
+
+	//LCD_WriteREGNo(0x29); /* display on */
 }
 
-static void ILI9341_LG2_8_Initial(void) 
-{ 
-	/* 省略硬件复位 */
-
-	LCD_WriteREGNo(0xCB); 
-	LCD_WriteRAM(0x39); 
-	LCD_WriteRAM(0x2C); 
-	LCD_WriteRAM(0x00); 
-	LCD_WriteRAM(0x34); 
-	LCD_WriteRAM(0x02); 
-
-	LCD_WriteREGNo(0xCF); 
-	LCD_WriteRAM(0x00); 
-	LCD_WriteRAM(0XC1); 
-	LCD_WriteRAM(0X30); 
-
-	LCD_WriteREGNo(0xE8);
-	LCD_WriteRAM(0x85); 
-	LCD_WriteRAM(0x00); 
-	LCD_WriteRAM(0x78); 
-
-	LCD_WriteREGNo(0xEA);
-	LCD_WriteRAM(0x00); 
-	LCD_WriteRAM(0x00); 
-
-	LCD_WriteREGNo(0xED);
-	LCD_WriteRAM(0x64); 
-	LCD_WriteRAM(0x03); 
-	LCD_WriteRAM(0X12); 
-	LCD_WriteRAM(0X81);
-	
-	LCD_WriteREGNo(0xF7);
-	LCD_WriteRAM(0x20); 
-
-	LCD_WriteREGNo(0xC0);//Power control 
-	LCD_WriteRAM(0x1b); //VRH[5:0] 
-
-	LCD_WriteREGNo(0xC1);//Power control 
-	LCD_WriteRAM(0x10); //SAP[2:0];BT[3:0] 
-
-	LCD_WriteREGNo(0xC5);//VCM control 
-	LCD_WriteRAM(0x2d); 
-	LCD_WriteRAM(0x33); 
-
-//	LCD_WriteREGNo(0xC7); //VCM control2 
-//	LCD_WriteRAM(0xCf);
-
-	LCD_WriteREGNo(0x36);// Memory Access Control 
-	LCD_WriteRAM(0x48); 
-
-	LCD_WriteREGNo(0xB1);
-	LCD_WriteRAM(0x00); 
-	LCD_WriteRAM(0x1d); 
-
-	LCD_WriteREGNo(0xB6);// Display Function Control 
-	LCD_WriteRAM(0x0A); 
-	LCD_WriteRAM(0x02); 
-
-	LCD_WriteREGNo(0xF2);// 3Gamma Function Disable 
-	LCD_WriteRAM(0x00); 
-
-	LCD_WriteREGNo(0x26);//Gamma curve selected 
-	LCD_WriteRAM(0x01); 
-
-	LCD_WriteREGNo(0xE0);//Set Gamma 
-	LCD_WriteRAM(0x0F); 
-	LCD_WriteRAM(0x3a); 
-	LCD_WriteRAM(0x36); 
-	LCD_WriteRAM(0x0b); 
-	LCD_WriteRAM(0x0d); 
-	LCD_WriteRAM(0x06); 
-	LCD_WriteRAM(0x4c); 
-	LCD_WriteRAM(0x91); 
-	LCD_WriteRAM(0x31); 
-	LCD_WriteRAM(0x08); 
-	LCD_WriteRAM(0x10); 
-	LCD_WriteRAM(0x04); 
-	LCD_WriteRAM(0x11); 
-	LCD_WriteRAM(0x0c); 
-	LCD_WriteRAM(0x00); 
-
-	LCD_WriteREGNo(0XE1); //Set Gamma 
-	LCD_WriteRAM(0x00); 
-	LCD_WriteRAM(0x06); 
-	LCD_WriteRAM(0x0a); 
-	LCD_WriteRAM(0x05); 
-	LCD_WriteRAM(0x12); 
-	LCD_WriteRAM(0x09); 
-	LCD_WriteRAM(0x2c); 
-	LCD_WriteRAM(0x92); 
-	LCD_WriteRAM(0x3f); 
-	LCD_WriteRAM(0x08); 
-	LCD_WriteRAM(0x0e); 
-	LCD_WriteRAM(0x0b); 
-	LCD_WriteRAM(0x2e); 
-	LCD_WriteRAM(0x33); 
-	LCD_WriteRAM(0x0F); 
-
-	LCD_WriteREGNo(0x11); //Exit Sleep 
-	Delay_ms(120); 
-	LCD_WriteREGNo(0x29); //Display on 
-} 
-static void LCD_SetScanDir(LCD_ScanDir_t ScanDir)
+void LCD_SetScanDir(LCD_ScanDir_t ScanDir)
 {
 	uint16_t CtrlData = 0;
 	LCD_Info.ScanDir = ScanDir;
@@ -162,10 +161,10 @@ static void LCD_SetScanDir(LCD_ScanDir_t ScanDir)
 			CtrlData |= (0 << 7) | (0 << 6) | (0 << 5);
 			break;
 		case LeftToRight_BottomToTop:
-			CtrlData |= (0 << 7) | (1 << 6) | (0 << 5);
+			CtrlData |= (1 << 7) | (0 << 6) | (0 << 5);
 			break;
 		case RightToLeft_TopToBottom:
-			CtrlData |= (1 << 7) | (0 << 6) | (0 << 5);
+			CtrlData |= (0 << 7) | (1 << 6) | (0 << 5);
 			break;
 		case RightToLeft_BottomToTop:
 			CtrlData |= (1 << 7) | (1 << 6) | (0 << 5);
@@ -186,10 +185,10 @@ static void LCD_SetScanDir(LCD_ScanDir_t ScanDir)
 		default:
 			break;
 	}
-	CtrlData |= (1 << 3);
+	CtrlData |= 0x08;	/* 设置RGB位 */
 	LCD_WriteREG(LCD_Command_MemoryAccessControl,CtrlData);
 }
-void LCD_SetDisplayDir(uint8_t Dir, LCD_ScanDir_t ScanDir)
+void LCD_SetDisplayDir(uint8_t Dir)
 {
 	LCD_Info.Direction = Dir;
 
@@ -208,7 +207,6 @@ void LCD_SetDisplayDir(uint8_t Dir, LCD_ScanDir_t ScanDir)
 		default:
 			break;
 	}
-	LCD_SetScanDir(ScanDir);
 }
 void LCD_SetWindow(uint16_t StartX, uint16_t StartY, uint16_t Width, uint16_t Height)
 {
@@ -240,7 +238,8 @@ void LCD_SetCursor(uint16_t X, uint16_t Y)
 void LCD_ClearScreen(uint16_t Color)
 {
 	uint32_t Cnt = LCD_Info.Width * LCD_Info.Height;
-
+	
+	LCD_SetCursor(0x0000, 0x0000);
 	LCD_WriteREGNo(LCD_Command_MemoryWrite);
 	for(uint32_t i = 0; i < Cnt; i++)
 	{
@@ -255,12 +254,128 @@ void LCD_SetBL(uint16_t duty)
 void LCD_Init(void)
 {
 	LCD_ReadID4();
-	ILI9341_LG2_8_Initial();
-	LCD_SetDisplayDir(0,LeftToRight_TopToBottom);
 	
+	ST7789_RegInit();
+	LCD_SetDisplayDir(0);
+	LCD_SetScanDir(LeftToRight_TopToBottom);
+	LCD_SetWindow(0,0,LCD_Info.Width,LCD_Info.Height);
+
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 	LCD_SetBL(800);
 	
-	LCD_ClearScreen(65535);
+	LCD_ClearScreen(10000);
+}
+void LCD_TouchWrite(uint8_t Byte)
+{
+	uint8_t SendData = 0;
+
+	for (int8_t i = 7; i >= 0; i--)
+	{
+		SendData = ((Byte >> i) & 1);
+		TOUCH_SPI_MO(SendData);
+		TOUCH_SPI_CLK(0);
+		Delay_us(1);
+		TOUCH_SPI_CLK(1);
+	}
 }
 
+uint16_t LCD_TouchRead(uint8_t Cmd)
+{
+	uint16_t Data = 0;
+
+	TOUCH_SPI_CS(0);
+	TOUCH_SPI_MO(0);
+	TOUCH_SPI_CLK(0);
+	Delay_us(1);
+
+	LCD_TouchWrite(Cmd);
+	Delay_us(4);
+	
+	TOUCH_SPI_CLK(0);
+	Delay_us(1);
+	TOUCH_SPI_CLK(1);
+	Delay_us(1);
+
+	for (int8_t i = 15; i >= 0; i++)
+	{
+		TOUCH_SPI_CLK(0);
+		Delay_us(1);
+		TOUCH_SPI_CLK(1);
+		Data |= (TOUCH_SPI_READ_MI() << i);
+	}
+	Data >>= 4;
+
+	TOUCH_SPI_CS(1);
+	return Data;
+}
+static uint16_t Filter_PostAverage(uint8_t Cmd)
+{
+	/* 去极值平均滤波:取5次,去掉最大最小值,取剩余3个数的平均值 */
+	uint16_t OriginValue[TOUCH_SAMPLES_Cnt] = {0};
+	uint16_t temp;
+	uint8_t RealCnt;
+	uint16_t Sum;
+
+	for (uint8_t i = 0; i < TOUCH_SAMPLES_Cnt; i++)
+	{
+		OriginValue[i] = LCD_TouchRead(Cmd);
+	}
+
+	/* 升序冒泡排序,筛选极值 */
+	for (uint8_t i = 0; i < TOUCH_SAMPLES_Cnt - 1; i++)
+	{
+		for (uint8_t j = TOUCH_SAMPLES_Cnt - 1; j > i; j--)
+		{
+			if (OriginValue[j - 1] > OriginValue[j])
+			{
+				temp = OriginValue[j - 1];
+				OriginValue[j - 1] = OriginValue[j];
+				OriginValue[j] = temp;
+			}
+		}
+	}
+
+	/* 计算平均值 */
+	RealCnt = TOUCH_SAMPLES_Cnt - (TOUCH_FILTER_Cnt << 1);
+	for (uint8_t k = TOUCH_FILTER_Cnt; k < TOUCH_FILTER_Cnt + RealCnt; k++)
+	{
+		Sum += OriginValue[k];
+	}
+
+	return Sum / RealCnt;
+}
+static uint16_t Filter_Delta(uint8_t Cmd)
+{
+	/* 差值校验滤波 */
+	uint16_t Data1,Data2;
+	uint16_t Delta;
+
+	do
+	{
+		Data1 = Filter_PostAverage(Cmd);
+		Data2 = Filter_PostAverage(Cmd);
+		if (Data1 > Data2)
+		{
+			Delta = Data1 - Data2;
+		}
+		else
+		{
+			Delta = Data2 - Data1;
+		}
+	}while (Delta > TOUCH_FILTER_DELTA);
+
+	return (Data1 + Data2) >> 1; 
+}
+uint8_t LCD_GetTouchCoord(uint16_t *X, uint16_t *Y)
+{
+	if (GPIO_PIN_RESET == TOUCH_READ_PEN())
+	{
+		*X = Filter_Delta(TOUCH_Command_GetX);
+		*Y = Filter_Delta(TOUCH_Command_GetY);
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}

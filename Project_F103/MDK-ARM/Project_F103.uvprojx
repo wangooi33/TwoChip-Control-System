@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xE</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../BSW/IIC;../BSW/SCCB;../BSW/Delay;../ASW/Check;../ASW/IAP;../ASW/Task_Manage;../Component/AT24Cxx;../Component/LCD;../Component/LF0038;../Component/NM25Qxx;../Component/OV7725;../Component/RGB;../Component/TJC;..\Component\FreeRTOS\include;..\Component\FreeRTOS\portable\RVDS\ARM_CM3;..\Component\FreeRTOS</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../BSW/IIC;../BSW/SCCB;../BSW/Delay;../ASW/Check;../ASW/IAP;../ASW/Task_Manage;../Component/AT24Cxx;../Component/LCD;../Component/LF0038;../Component/NM25Qxx;../Component/OV7725;../Component/RGB;../Component/TJC;../Component/FreeRTOS/include;../Component/FreeRTOS/portable/RVDS/ARM_CM3;../Component/FreeRTOS</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>

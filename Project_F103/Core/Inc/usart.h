@@ -36,18 +36,23 @@ extern UART_HandleTypeDef huart1;
 
 extern UART_HandleTypeDef huart2;
 
+extern UART_HandleTypeDef huart3;
+
 /* USER CODE BEGIN Private defines */
 #define U1BUF_MAXSIZE 256
 #define U2BUF_MAXSIZE 256
+#define U3BUF_MAXSIZE 256
 
 /* USER CODE END Private defines */
 
 void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
+void MX_USART3_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 extern uint8_t gU1RxBuf[U1BUF_MAXSIZE];
 extern uint8_t gU2RxBuf[U2BUF_MAXSIZE];
+extern uint8_t gU3RxBuf[U3BUF_MAXSIZE];
 
 /* USER CODE END Prototypes */
 

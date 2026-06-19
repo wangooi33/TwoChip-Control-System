@@ -5,6 +5,15 @@
 wTaskHandle_st wTaskHandle;
 
 /* function implementation --------------------------------------------------*/
+void Task5_IWDG(void *pvParameters)
+{
+	for(;;)
+	{
+		HAL_IWDG_Refresh(&hiwdg);
+		vTaskDelay(pdMS_TO_TICKS(500));
+	}
+}
+
 static void TaskCreateError(uint8_t taskid)
 {
 	uint8_t Errid;
@@ -21,7 +30,7 @@ static void AllTaskCreat(void *pvParameters)
 {
 	uint8_t xReturn = pdFAIL;
 	
-	xReturn = xTaskCreate(Task1_RainbowRGB, "Task1_RGB", 64, NULL, 0, &wTaskHandle.Task1_RGBHandle);
+	xReturn = xTaskCreate(Task1_RainbowRGB, "Task1_RGB", 64, NULL, 1, &wTaskHandle.Task1_RGBHandle);
 	if (xReturn != pdPASS)
 	{
 		TaskCreateError(1);
@@ -34,11 +43,19 @@ static void AllTaskCreat(void *pvParameters)
 //		TaskCreateError(2);
 //	}
 
-	xReturn = xTaskCreate(Task3_InfraredScan, "Task3_IRCtrl", 512, NULL, 3, &wTaskHandle.Task3_IRCtrlHandle);
+	xReturn = xTaskCreate(Task3_InfraredScan, "Task3_IRCtrl", 512, NULL, 2, &wTaskHandle.Task3_IRCtrlHandle);
 	if (xReturn != pdPASS)
 	{
 		TaskCreateError(3);
 	}
+
+#if IWDG_ENABLE
+	xReturn = xTaskCreate(Task5_IWDG, "Task5_IWDG", 64, NULL, 3, &wTaskHandle.Task5_IWDGHandle);
+	if (xReturn != pdPASS)
+	{
+		TaskCreateError(5);
+	}
+#endif
 	
 	vTaskDelete(wTaskHandle.Task0_RootHandle);
 }
@@ -63,10 +80,6 @@ void RootTaskCreate(void *pvParameters)
 void vApplicationIdleHook(void)
 {
 	/* 空闲任务钩子 */
-    /* 低功耗、统计、喂狗都可以放这 */
-#if IWDG_ENABLE
-	HAL_IWDG_Refresh(&hiwdg);
-#endif
 }
 void vApplicationStackOverflowHook(TaskHandle_t xTask,char *pcTaskName)
 {
@@ -79,7 +92,7 @@ void vApplicationStackOverflowHook(TaskHandle_t xTask,char *pcTaskName)
 }
 void vApplicationTickHook(void)
 {
-	/* 当内核时钟跳动一次时，在内核上下文里，顺手执行一下钩子函数 */
+	/* 内核时钟跳动钩子函数 */
 }
 void vApplicationMallocFailedHook(void)
 {
