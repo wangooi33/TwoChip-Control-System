@@ -210,8 +210,8 @@ void LCD_SetDisplayDir(uint8_t Dir)
 }
 void LCD_SetWindow(uint16_t StartX, uint16_t StartY, uint16_t Width, uint16_t Height)
 {
-	uint16_t SXtoEx = Width - StartX -1;
-	uint16_t SYtoEY = Height - StartY -1;
+	uint16_t SXtoEx = Width + StartX -1;
+	uint16_t SYtoEY = Height + StartY -1;
 	
 	LCD_WriteREGNo(LCD_Command_ColumnAddressSet);
 	LCD_WriteRAM(StartX >> 8);

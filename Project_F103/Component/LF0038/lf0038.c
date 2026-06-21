@@ -102,7 +102,7 @@ void Task3_InfraredScan(void *pvParameters)
 					{
 						if (FirstRun == 1)
 						{
-							xTaskCreate(Task4_Camera, "Task_04", 1024, NULL, 2, &wTaskHandle.Task4_CameraHandle);
+							xTaskCreate(Task4_Camera, "Task_04", 4096, NULL, 2, &wTaskHandle.Task4_CameraHandle);
 							FirstRun = 0;
 						}
 						else
