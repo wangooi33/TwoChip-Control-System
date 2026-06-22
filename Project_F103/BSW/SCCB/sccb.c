@@ -5,24 +5,6 @@ void SCCB_Init(void)
 {
 
 }
-static void SDASetInputMode(void)
-{
-	GPIO_InitTypeDef GPIOInit_ST = {0};
-	GPIOInit_ST.Pin = SCCB_SDA_Pin;
-	GPIOInit_ST.Mode = GPIO_MODE_INPUT;
-	GPIOInit_ST.Pull = GPIO_PULLUP;
-	GPIOInit_ST.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(SCCB_SDA_GPIO_Port,&GPIOInit_ST);
-}
-static void SDASetOutputMode(void)
-{
-	GPIO_InitTypeDef GPIOInit_ST = {0};
-	GPIOInit_ST.Pin = SCCB_SDA_Pin;
-	GPIOInit_ST.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIOInit_ST.Pull = GPIO_PULLUP;
-	GPIOInit_ST.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(SCCB_SDA_GPIO_Port,&GPIOInit_ST);
-}
 void SCCB_Delay(void)
 {
     Delay_us(10);
@@ -70,8 +52,6 @@ void SCCB_ReceiveByte(uint8_t *Byte)
 {
     int8_t DataIndex;
     uint8_t DataBit;
-
-	SDASetInputMode();
 	
     for (DataIndex = 7; DataIndex >= 0; DataIndex--)
     {
@@ -90,8 +70,6 @@ void SCCB_ReceiveByte(uint8_t *Byte)
     SCCB_Delay();
     SCCB_SDA(0);
     SCCB_Delay();
-
-	SDASetOutputMode();
 }
 void SCCB_3PhaseWrite(uint8_t ID_Addr, uint8_t Sub_Addr, uint8_t Data)
 {

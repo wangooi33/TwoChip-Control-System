@@ -464,6 +464,9 @@ void Task4_Camera(void *pvParameters)
 	OV7725_SetMode();
 	OV7725_EnableOutput();
 	LCD_DisplayON();
+	LCD_SetDisplayDir(0);
+	LCD_SetScanDir(LeftToRight_TopToBottom);
+	LCD_SetWindow(0,0,LCD_Info.Width,LCD_Info.Height);
 	LCD_WriteREGNo(LCD_Command_MemoryWrite);
 	for(;;)
 	{

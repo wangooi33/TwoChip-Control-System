@@ -263,7 +263,7 @@ void LCD_Init(void)
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
 	LCD_SetBL(800);
 	
-	LCD_ClearScreen(10000);
+	LCD_ClearScreen(1024);
 }
 void LCD_TouchWrite(uint8_t Byte)
 {

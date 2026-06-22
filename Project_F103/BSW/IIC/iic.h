@@ -31,8 +31,8 @@ void IIC_Stop(void);
 void IIC_Ack(void);
 void IIC_NAck(void);
 uint8_t IIC_WaitAck(void); 
-void IIC_SendByte(uint8_t txd);
-uint8_t IIC_ReadByte(unsigned char ack);
+void IIC_SendByte(uint8_t data);
+uint8_t IIC_ReadByte(void);
 
 
 #ifdef __cplusplus
