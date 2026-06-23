@@ -104,7 +104,7 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = OV7725_D0_Pin|OV7725_D1_Pin|OV7725_D2_Pin|OV7725_D3_Pin
                           |OV7725_D4_Pin|OV7725_D5_Pin|OV7725_D6_Pin|OV7725_D7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : KEY_UP_Pin */
@@ -135,7 +135,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin : SCCB_SCL_Pin */
   GPIO_InitStruct.Pin = SCCB_SCL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(SCCB_SCL_GPIO_Port, &GPIO_InitStruct);
 
@@ -149,7 +149,7 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin : SCCB_SDA_Pin */
   GPIO_InitStruct.Pin = SCCB_SDA_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(SCCB_SDA_GPIO_Port, &GPIO_InitStruct);
 
@@ -196,6 +196,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		if (OV7725_Info.FrameHandleSt == Frame_Done)
 		{
 			OV7725_Info.FrameHandleSt = Frame_Pend;
+			OV7725_WRST(0);
+			OV7725_WEN(1);
+			OV7725_WRST(1);
 			vTaskNotifyGiveFromISR(wTaskHandle.Task4_CameraHandle,&pxHigherPriorityTaskWoken);
 		}
 		else

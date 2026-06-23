@@ -2,6 +2,8 @@
 #define __OV7725_REG_H
 /* includes -----------------------------------------------------------------*/
 #include "main.h"
+#include "delay.h"
+#include "sccb.h"
 
 /* macro --------------------------------------------------------------------*/
 #define OV7725_REG_GAIN                 0x00
@@ -170,9 +172,86 @@
 #define OV7725_REG_DSPAuto              0xAC
 
 
+//分辨率
+#define OV7725_VGA_WIDTH_MAX			640
+#define OV7725_VGA_HEIGHT_MAX			480
+#define OV7725_QVGA_WIDTH_MAX			320
+#define OV7725_QVGA_HEIGHT_MAX			240
+//数组长度
 #define OV7725_REGInitBUF_MAXSIZE		65
 
 /* enum ---------------------------------------------------------------------*/
+/* 灯光模式 */
+typedef enum
+{
+	OV7725_LIGHT_MODE_AUTO = 0x00,         /* Auto */
+	OV7725_LIGHT_MODE_SUNNY,               /* Sunny */
+	OV7725_LIGHT_MODE_CLOUDY,              /* Cloudy */
+	OV7725_LIGHT_MODE_OFFICE,              /* Office */
+	OV7725_LIGHT_MODE_HOME,                /* Home */
+	OV7725_LIGHT_MODE_NIGHT,               /* Night */
+} OV7725_Light_Mode_t;
+    
+/* 色彩饱和度 */
+typedef enum
+{
+	OV7725_COLOR_SATURATION_0 = 0x00,      /* +4 */
+	OV7725_COLOR_SATURATION_1,             /* +3 */
+	OV7725_COLOR_SATURATION_2,             /* +2 */
+	OV7725_COLOR_SATURATION_3,             /* +1 */
+	OV7725_COLOR_SATURATION_4,             /* 0 */
+	OV7725_COLOR_SATURATION_5,             /* -1 */
+	OV7725_COLOR_SATURATION_6,             /* -2 */
+	OV7725_COLOR_SATURATION_7,             /* -3 */
+	OV7725_COLOR_SATURATION_8,             /* -4 */
+} OV7725_Color_Saturation_t;
+    
+/* 亮度 */ 
+typedef enum
+{
+	OV7725_BRIGHTNESS_0 = 0x00,            /* +4 */
+	OV7725_BRIGHTNESS_1,                   /* +3 */
+	OV7725_BRIGHTNESS_2,                   /* +2 */
+	OV7725_BRIGHTNESS_3,                   /* +1 */
+	OV7725_BRIGHTNESS_4,                   /* 0 */
+	OV7725_BRIGHTNESS_5,                   /* -1 */
+	OV7725_BRIGHTNESS_6,                   /* -2 */
+	OV7725_BRIGHTNESS_7,                   /* -3 */
+	OV7725_BRIGHTNESS_8,                   /* -4 */
+} OV7725_Brightness_t;
+    
+/* 对比度 */
+typedef enum
+{
+	OV7725_CONTRAST_0 = 0x00,           /* +4 */
+	OV7725_CONTRAST_1,                  /* +3 */
+	OV7725_CONTRAST_2,                  /* +2 */
+	OV7725_CONTRAST_3,                  /* +1 */
+	OV7725_CONTRAST_4,                  /* 0 */
+	OV7725_CONTRAST_5,                  /* -1 */
+	OV7725_CONTRAST_6,                  /* -2 */
+	OV7725_CONTRAST_7,                  /* -3 */
+	OV7725_CONTRAST_8,                  /* -4 */
+} OV7725_Contrast_t;
+
+/* 特殊效果 */
+typedef enum
+{
+	OV7725_SPECIAL_EFFECT_NORMAL = 0x00,    /* Normal */
+	OV7725_SPECIAL_EFFECT_BW,               /* B&W */
+	OV7725_SPECIAL_EFFECT_BLUISH,           /* Bluish */
+	OV7725_SPECIAL_EFFECT_SEPIA,            /* Sepia */
+	OV7725_SPECIAL_EFFECT_REDISH,           /* Redish */
+	OV7725_SPECIAL_EFFECT_GREENISH,         /* Greenish */
+	OV7725_SPECIAL_EFFECT_NEGATIVE,         /* Negative */
+} OV7725_Special_Effect_t;
+
+/* 输出模式 */
+typedef enum
+{
+	OV7725_OUTPUT_MODE_VGA = 0x00,         /* VGA */
+	OV7725_OUTPUT_MODE_QVGA,               /* QVGA */
+} OV7725_OutputMode_t;
 
 /* types --------------------------------------------------------------------*/
 
@@ -182,5 +261,14 @@ extern const uint8_t OV7725_RegInitData[OV7725_REGInitBUF_MAXSIZE][2];
 /* enum ---------------------------------------------------------------------*/
 
 /* functions prototypes -----------------------------------------------------*/
+void OV7725_WriteReg(uint8_t Reg, uint8_t Data);
+uint8_t OV7725_ReadReg(uint8_t Reg);
+
+void OV7725_SetLightMode(OV7725_Light_Mode_t Light_Mode);
+void OV7725_SetColorSaturation(OV7725_Color_Saturation_t ColorSaturation);
+void OV7725_SetBrightness(OV7725_Brightness_t Brightness);
+void OV7725_SetContrast(OV7725_Contrast_t Contrast);
+void OV7725_SetSpecialEffects(OV7725_Special_Effect_t SpecialEffects);
+void OV7725_SCCBRegReset(void);
 
 #endif /* __OV7725_REG_H */

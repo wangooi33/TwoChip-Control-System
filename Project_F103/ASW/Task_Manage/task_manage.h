@@ -26,6 +26,8 @@ typedef struct
 	TaskHandle_t Task3_IRCtrlHandle;
 	TaskHandle_t Task4_CameraHandle;
 	TaskHandle_t Task5_IWDGHandle;
+	TaskHandle_t Task6_CMotorHandshake;
+	TaskHandle_t Task7_CMotorProcess;
 }wTaskHandle_st;
 
 /* global variable ----------------------------------------------------------*/

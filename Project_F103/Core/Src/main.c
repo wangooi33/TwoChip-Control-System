@@ -34,7 +34,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "W016";
+const char SoftWareID[] = "W017";
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -72,7 +72,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  //SCB->VTOR = APP_START_ADDRESS;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
