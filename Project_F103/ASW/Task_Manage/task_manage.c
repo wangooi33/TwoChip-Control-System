@@ -14,6 +14,10 @@ void Task5_IWDG(void *pvParameters)
 	}
 }
 
+/**
+ * @note:Root task Function
+ *
+ */
 static void TaskCreateError(uint8_t taskid)
 {
 	uint8_t Errid;
@@ -36,7 +40,6 @@ static void AllTaskCreat(void *pvParameters)
 		TaskCreateError(1);
 	}
 
-//	//需要二次确认
 //	xReturn = xTaskCreate(Task2_IAP, "Task2_IAP", 128, NULL, 3, &wTaskHandle.Task2_IAPHandle);
 //	if (xReturn != pdPASS)
 //	{
@@ -59,12 +62,6 @@ static void AllTaskCreat(void *pvParameters)
 	
 	vTaskDelete(wTaskHandle.Task0_RootHandle);
 }
-static void AllQueueCreat(void *pvParameters)
-{
-	//Usart1RxQueue = xQueueCreate(1, sizeof(UsartRxMsg_t));
-
-}
-
 void RootTaskCreate(void *pvParameters)
 {
 	uint8_t xReturn = pdFAIL;
@@ -74,9 +71,13 @@ void RootTaskCreate(void *pvParameters)
 	{
 		TaskCreateError(0);
 	}
-	AllQueueCreat(NULL);
 }
 
+
+/**
+ * @note:Hook Function
+ *
+ */
 void vApplicationIdleHook(void)
 {
 	/* 空闲任务钩子 */

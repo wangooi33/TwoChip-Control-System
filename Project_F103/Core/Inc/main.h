@@ -36,6 +36,8 @@ extern "C" {
 #include "list.h"
 #include "queue.h"
 #include "timers.h"
+#include "stream_buffer.h"
+#include "semphr.h"
 
 /* USER CODE END Includes */
 

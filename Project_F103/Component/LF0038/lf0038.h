@@ -49,17 +49,17 @@
 /* enum ---------------------------------------------------------------------*/
 typedef enum
 {
-    InfraredCtrl_Idle = 0,
-    InfraredCtrl_ReadData,
+	InfraredCtrl_Idle = 0,
+	InfraredCtrl_ReadData,
 }InfraredCtrl_State_t;
 
 /* types --------------------------------------------------------------------*/
 typedef struct
 {
-    volatile uint32_t Frame;
-    volatile uint8_t BitCnt;
-    volatile uint8_t FrameOk;
-    volatile uint16_t RepeatCnt;
+	volatile uint32_t Frame;
+	volatile uint8_t BitCnt;
+	volatile uint8_t FrameOk;
+	volatile uint16_t RepeatCnt;
 	InfraredCtrl_State_t State;
 }InfraredCtrl_Info_t;
 

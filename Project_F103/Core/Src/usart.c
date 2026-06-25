@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "IAP.h"
+#include "motor.h"
 
 uint8_t gU1RxBuf[U1BUF_MAXSIZE];
 uint8_t gU2RxBuf[U2BUF_MAXSIZE];
@@ -409,6 +410,7 @@ int fputc(int ch, FILE *f)
 }
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
+	BaseType_t pxHigherPriorityTaskWoken = pdFALSE;
 	if (huart->Instance == USART1)
 	{
 	    IAP_RxProcess(gU1RxBuf,U1BUF_MAXSIZE);
@@ -420,7 +422,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 	}
 	if (huart->Instance == USART3)
 	{
+		xQueueSendFromISR(CMotorQueue,gU3RxBuf,&pxHigherPriorityTaskWoken);
 		HAL_UARTEx_ReceiveToIdle_DMA(&huart3,gU3RxBuf,U3BUF_MAXSIZE);
+		portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
 	}
 }
 /* USER CODE END 1 */

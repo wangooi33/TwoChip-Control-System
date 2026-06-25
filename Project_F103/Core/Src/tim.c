@@ -475,53 +475,53 @@ void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
 }
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-    uint16_t pulse;
+	uint16_t pulse;
 	BaseType_t pxHigherPriorityTaskWoken = pdFALSE;
-    if (htim->Instance == TIM4)
-    {
+	if (htim->Instance == TIM4)
+	{
 		uint8_t cmd = 0;
-        if (GPIO_PIN_SET == HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_9))
-        {
-        	/* 清零计数器,修改极性:捕获下降沿 */
-            __HAL_TIM_SET_COUNTER(htim,0);
-            __HAL_TIM_SET_CAPTUREPOLARITY(htim,TIM_CHANNEL_4,TIM_INPUTCHANNELPOLARITY_FALLING);
-        }
-        else
-        {
-        	/* 读取高电平持续时间,修改极性:捕获上升沿 */
-            pulse = HAL_TIM_ReadCapturedValue(htim,TIM_CHANNEL_4);
-            __HAL_TIM_SET_CAPTUREPOLARITY(htim,TIM_CHANNEL_4,TIM_INPUTCHANNELPOLARITY_RISING);
+		if (GPIO_PIN_SET == HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_9))
+		{
+			/* 清零计数器,修改极性:捕获下降沿 */
+			__HAL_TIM_SET_COUNTER(htim,0);
+			__HAL_TIM_SET_CAPTUREPOLARITY(htim,TIM_CHANNEL_4,TIM_INPUTCHANNELPOLARITY_FALLING);
+		}
+		else
+		{
+			/* 读取高电平持续时间,修改极性:捕获上升沿 */
+			pulse = HAL_TIM_ReadCapturedValue(htim,TIM_CHANNEL_4);
+			__HAL_TIM_SET_CAPTUREPOLARITY(htim,TIM_CHANNEL_4,TIM_INPUTCHANNELPOLARITY_RISING);
 
-            switch(InfraredCtrl_Info.State)
-            {
-                case InfraredCtrl_Idle:
+			switch(InfraredCtrl_Info.State)
+			{
+				case InfraredCtrl_Idle:
 					/* 引导码 */
-                    if (InfraredCtrl_isLead(pulse))
-                    {
-                        InfraredCtrl_Info.Frame = 0;
-                        InfraredCtrl_Info.BitCnt = 0;
-                        InfraredCtrl_Info.State = InfraredCtrl_ReadData;
-                    }
+					if (InfraredCtrl_isLead(pulse))
+					{
+						InfraredCtrl_Info.Frame = 0;
+						InfraredCtrl_Info.BitCnt = 0;
+						InfraredCtrl_Info.State = InfraredCtrl_ReadData;
+					}
 					/* 连发码/重复码 */
-                    else if (InfraredCtrl_isRepeat(pulse))
-                    {
-                        InfraredCtrl_Info.RepeatCnt++;
-                    }
-                    break;
+					else if (InfraredCtrl_isRepeat(pulse))
+					{
+						InfraredCtrl_Info.RepeatCnt++;
+					}
+					break;
 
-                case InfraredCtrl_ReadData:
-                    if (InfraredCtrl_isBit0(pulse))
-                    {
-                        InfraredCtrl_Framing(0);
-                    }
-                    else if (InfraredCtrl_isBit1(pulse))
-                    {
-                        InfraredCtrl_Framing(1);
-                    }
-                    else
-                    {
-                        InfraredCtrl_Reset();
-                    }
+				case InfraredCtrl_ReadData:
+					if (InfraredCtrl_isBit0(pulse))
+					{
+						InfraredCtrl_Framing(0);
+					}
+					else if (InfraredCtrl_isBit1(pulse))
+					{
+					InfraredCtrl_Framing(1);
+						}
+					else
+					{
+						InfraredCtrl_Reset();
+					}
 
 					cmd = InfraredCtrl_Scan();
 					if (cmd != 0)
@@ -531,13 +531,13 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 										   eSetValueWithOverwrite, 
 										   &pxHigherPriorityTaskWoken);
 					}
-                    break;
+					break;
 
-                default:
-                    InfraredCtrl_Reset();
-                    break;
-            }
-        }
+				default:
+					InfraredCtrl_Reset();
+					break;
+			}
+		}
 		portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
 		
     }

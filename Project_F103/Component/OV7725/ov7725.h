@@ -42,8 +42,8 @@ typedef enum
 
 typedef enum
 {
-	Frame_Pend,
-	Frame_Done,
+	Frame_Ready,
+	Frame_WaitFIFOReady,
 } OV7725_HandleState_t;
 
 /* types --------------------------------------------------------------------*/
@@ -55,7 +55,7 @@ typedef struct
 	uint16_t OutputWidth;
 	uint16_t OutputHeight;
 	uint16_t FrameCount;
-    OV7725_HandleState_t FrameHandleSt;
+	OV7725_HandleState_t FrameHandleSt;
 }OV7725_Info_t;
 
 /* global variable ----------------------------------------------------------*/

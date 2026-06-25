@@ -161,7 +161,7 @@ uint8_t OV7725_GetFrame(volatile uint16_t *pBuf, OV7725_GetFrameType_t Type)
 {
 	uint16_t Data;
 
-	if (OV7725_Info.FrameHandleSt == Frame_Done)
+	if (OV7725_Info.FrameHandleSt == Frame_WaitFIFOReady)
 	{
 		return 0;
 	}
@@ -199,7 +199,7 @@ uint8_t OV7725_GetFrame(volatile uint16_t *pBuf, OV7725_GetFrameType_t Type)
 			}
 		}
 	}
-	OV7725_Info.FrameHandleSt = Frame_Done;
+	OV7725_Info.FrameHandleSt = Frame_WaitFIFOReady;
 	OV7725_Info.FrameCount++;
 
 	return 1;

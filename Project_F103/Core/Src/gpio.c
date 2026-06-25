@@ -193,9 +193,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	BaseType_t pxHigherPriorityTaskWoken = pdFALSE;
 	if (GPIO_Pin == OV7725_VSYNC_Pin)
 	{
-		if (OV7725_Info.FrameHandleSt == Frame_Done)
+		if (OV7725_Info.FrameHandleSt == Frame_WaitFIFOReady)
 		{
-			OV7725_Info.FrameHandleSt = Frame_Pend;
+			OV7725_Info.FrameHandleSt = Frame_Ready;
 			OV7725_WRST(0);
 			OV7725_WEN(1);
 			OV7725_WRST(1);
