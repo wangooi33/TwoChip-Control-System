@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "can.h"
 #include "dma.h"
 #include "iwdg.h"
 #include "spi.h"
@@ -34,7 +35,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "W017";
+const char SoftWareID[] = "W018";
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -104,12 +105,15 @@ int main(void)
   MX_TIM1_Init();
   MX_USART3_UART_Init();
   MX_TIM7_Init();
+  MX_CAN_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
   HAL_UARTEx_ReceiveToIdle_DMA(&huart1,gU1RxBuf,U1BUF_MAXSIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2,gU2RxBuf,U2BUF_MAXSIZE);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart3,gU3RxBuf,U3BUF_MAXSIZE);
   HAL_TIM_IC_Start_IT(&htim4,TIM_CHANNEL_4);
   HAL_TIM_Base_Start(&htim7);
+  WCAN_Init();
   AT24Cxx_Init();
   Flash_Init();
   RGB_Init();

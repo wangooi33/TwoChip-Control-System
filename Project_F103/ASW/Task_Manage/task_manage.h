@@ -12,6 +12,8 @@
 #include "lf0038.h"
 #include "rgb_led.h"
 #include "tjc.h"
+#include "motor.h"
+#include "w_can.h"
 
 /* macro --------------------------------------------------------------------*/
 
