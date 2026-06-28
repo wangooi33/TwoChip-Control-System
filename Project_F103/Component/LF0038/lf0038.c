@@ -100,6 +100,7 @@ void Task3_InfraredScan(void *pvParameters)
 				case InfraredCtrl_Cmd_ZDYZ:
 					if (OV7725_Info.isEnable == 0)
 					{
+						OV7725_Info.isEnable = 1;
 						if (FirstRun == 1)
 						{
 							xTaskCreate(Task4_Camera, "Task4_Camera", 4096, NULL, 2, &wTaskHandle.Task4_CameraHandle);
@@ -107,16 +108,17 @@ void Task3_InfraredScan(void *pvParameters)
 						}
 						else
 						{
+							LCD_DisplayON();
+							OV7725_EnableOutput();
 							vTaskResume(wTaskHandle.Task4_CameraHandle);
 						}
-						OV7725_Info.isEnable = 1;
 					}
 					else
 					{
+						OV7725_Info.isEnable = 0;
 						LCD_DisplayOFF();
 						OV7725_DisableOutput();
 						vTaskSuspend(wTaskHandle.Task4_CameraHandle);
-						OV7725_Info.isEnable = 0;
 					}
 					break;
 

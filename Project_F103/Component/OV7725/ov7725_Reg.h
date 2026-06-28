@@ -178,7 +178,7 @@
 #define OV7725_QVGA_WIDTH_MAX			320
 #define OV7725_QVGA_HEIGHT_MAX			240
 //数组长度
-#define OV7725_REGInitBUF_MAXSIZE		65
+#define OV7725_REGInitBUF_MAXSIZE		72
 
 /* enum ---------------------------------------------------------------------*/
 /* 灯光模式 */

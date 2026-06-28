@@ -193,19 +193,22 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 	BaseType_t pxHigherPriorityTaskWoken = pdFALSE;
 	if (GPIO_Pin == OV7725_VSYNC_Pin)
 	{
-		if (OV7725_Info.FrameHandleSt == Frame_WaitFIFOReady)
+		if (OV7725_Info.isEnable == 0)
 		{
-			OV7725_Info.FrameHandleSt = Frame_Ready;
-			OV7725_WRST(0);
 			OV7725_WEN(1);
-			OV7725_WRST(1);
-			vTaskNotifyGiveFromISR(wTaskHandle.Task4_CameraHandle,&pxHigherPriorityTaskWoken);
+			return;
 		}
-		else
+
+		if (OV7725_Info.FrameHandleSt == Frame_WaitFrameStart)
 		{
-			OV7725_WEN(0);
+			OV7725_StartCapture();
 		}
-		portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
+		else if (OV7725_Info.FrameHandleSt == Frame_Capturing)
+		{
+			OV7725_StopCapture();
+			vTaskNotifyGiveFromISR(wTaskHandle.Task4_CameraHandle,&pxHigherPriorityTaskWoken);
+			portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
+		}
 	}
     
 }

@@ -42,8 +42,9 @@ typedef enum
 
 typedef enum
 {
+	Frame_WaitFrameStart = 0x00,
+	Frame_Capturing,
 	Frame_Ready,
-	Frame_WaitFIFOReady,
 } OV7725_HandleState_t;
 
 /* types --------------------------------------------------------------------*/
@@ -51,11 +52,11 @@ typedef struct
 {
 	uint16_t MID;
 	uint16_t PID;
-	uint8_t isEnable;
+	volatile uint8_t isEnable;
 	uint16_t OutputWidth;
 	uint16_t OutputHeight;
-	uint16_t FrameCount;
-	OV7725_HandleState_t FrameHandleSt;
+	volatile uint16_t FrameCount;
+	volatile OV7725_HandleState_t FrameHandleSt;
 }OV7725_Info_t;
 
 /* global variable ----------------------------------------------------------*/
@@ -65,6 +66,8 @@ extern OV7725_Info_t OV7725_Info;
 void OV7725_Init(void);
 void OV7725_EnableOutput(void);
 void OV7725_DisableOutput(void);
+void OV7725_StartCapture(void);
+void OV7725_StopCapture(void);
 uint8_t OV7725_GetFrame(volatile uint16_t *pBuf, OV7725_GetFrameType_t Type);
 void OV7725_SetOutputWindow(OV7725_OutputMode_t OutputMode, uint16_t Width, uint16_t Height);
 void OV7725_SetMode(void);

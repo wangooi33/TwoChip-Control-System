@@ -20,12 +20,13 @@ const uint8_t OV7725_RegInitData[OV7725_REGInitBUF_MAXSIZE][2] =
 	{OV7725_REG_FixGain,   0x09},
 	{OV7725_REG_AWB_Ctrl0, 0xE0},
 	{OV7725_REG_DSP_Ctrl1, 0xFF},
-	{OV7725_REG_DSP_Ctrl2, 0x00},
+	{OV7725_REG_DSP_Ctrl2, 0x06},
 	{OV7725_REG_DSP_Ctrl3, 0x00},
 	{OV7725_REG_DSP_Ctrl4, 0x00},
 	{OV7725_REG_COM8,      0xF0},
 	{OV7725_REG_COM4,      0xC1},
 	{OV7725_REG_COM6,      0xC5},
+	{OV7725_REG_COM10,     0x02},
 	{OV7725_REG_COM9,      0x11},
 	{OV7725_REG_BDBase,    0x7F},
 	{OV7725_REG_BDMStep,   0x03},
@@ -70,8 +71,10 @@ const uint8_t OV7725_RegInitData[OV7725_REGInitBUF_MAXSIZE][2] =
 	{OV7725_REG_GAM14,     0xD7},
 	{OV7725_REG_GAM15,     0xE8},
 	{OV7725_REG_SLOP,      0x20},
-	{OV7725_REG_COM3,      0x50},
+	{OV7725_REG_COM3,      0x00},
 	{OV7725_REG_COM5,      0xF5},
+	{OV7725_REG_COM13,     0x00},
+	{OV7725_REG_COM15,     0xD0},
 };
 /* function implementation --------------------------------------------------*/
 void OV7725_WriteReg(uint8_t Reg, uint8_t Data)

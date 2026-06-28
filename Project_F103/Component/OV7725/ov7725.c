@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "ov7725.h"
 #include "lcd.h"
 
@@ -10,6 +9,58 @@
 
 /* global variable ----------------------------------------------------------*/
 OV7725_Info_t OV7725_Info;
+
+/* private function ---------------------------------------------------------*/
+static uint8_t OV7725_GetByteFormFIFO(void);
+
+static inline void OV7725_FIFO_Delay(void)
+{
+	__NOP();
+	__NOP();
+	__NOP();
+	__NOP();
+}
+
+static void OV7725_FIFO_ResetReadPtr(void)
+{
+	OV7725_RCLK(0);
+	OV7725_RRST(0);
+	OV7725_FIFO_Delay();
+	OV7725_RCLK(1);
+	OV7725_FIFO_Delay();
+	OV7725_RCLK(0);
+	OV7725_FIFO_Delay();
+	OV7725_RCLK(1);
+	OV7725_FIFO_Delay();
+	OV7725_RCLK(0);
+	OV7725_FIFO_Delay();
+	OV7725_RRST(1);
+	OV7725_FIFO_Delay();
+}
+
+static uint8_t OV7725_FIFO_ReadByte(void)
+{
+	uint8_t Byte;
+
+	OV7725_RCLK(0);
+	OV7725_FIFO_Delay();
+	OV7725_RCLK(1);
+	OV7725_FIFO_Delay();
+	Byte = OV7725_GetByteFormFIFO();
+	OV7725_RCLK(0);
+	OV7725_FIFO_Delay();
+
+	return Byte;
+}
+
+static void OV7725_LCD_PrepareFrame(void)
+{
+	LCD_DisplayON();
+	LCD_SetDisplayDir(0);
+	LCD_SetScanDir(LeftToRight_TopToBottom);
+	LCD_SetWindow(0, 0, LCD_Info.Width, LCD_Info.Height);
+	LCD_WriteREGNo(LCD_Command_MemoryWrite);
+}
 
 /* function implementation --------------------------------------------------*/
 void OV7725_SetOutputWindow(OV7725_OutputMode_t OutputMode, uint16_t Width, uint16_t Height)
@@ -90,9 +141,9 @@ void OV7725_SetOutputWindow(OV7725_OutputMode_t OutputMode, uint16_t Width, uint
 	OV7725_WriteReg(OV7725_REG_EXHCH, NewEXHCH);
 
 }
-uint8_t OV7725_GetByteFormFIFO(void)
+static uint8_t OV7725_GetByteFormFIFO(void)
 {
-	uint8_t Byte;
+	uint8_t Byte = 0;
 #if 0
 	Byte |= (((OV7725_D0_GPIO_Port->IDR & OV7725_D0_Pin) == 0) ? (0) : (1)) << 0;
 	Byte |= (((OV7725_D1_GPIO_Port->IDR & OV7725_D1_Pin) == 0) ? (0) : (1)) << 1;
@@ -113,8 +164,11 @@ void OV7725_Init(void)
 	OV7725_WRST(1);
 	OV7725_RRST(1);
 	OV7725_OE(1);
-	OV7725_RCLK(1);
+	OV7725_RCLK(0);
 	OV7725_WEN(1);
+	OV7725_Info.isEnable = 0;
+	OV7725_Info.FrameCount = 0;
+	OV7725_Info.FrameHandleSt = Frame_WaitFrameStart;
 
 	/* SCCB_Init */
 	SCCB_Init();
@@ -150,42 +204,47 @@ void OV7725_Init(void)
 
 void OV7725_EnableOutput(void)
 {
-	//从FIFO中读出数据,传送给MCU
+	OV7725_WEN(1);
+	OV7725_Info.FrameHandleSt = Frame_WaitFrameStart;
 	OV7725_OE(0);
 }
 void OV7725_DisableOutput(void)
 {
+	OV7725_WEN(0);
+	OV7725_Info.FrameHandleSt = Frame_WaitFrameStart;
 	OV7725_OE(1);
+}
+void OV7725_StartCapture(void)
+{
+	OV7725_WEN(1);
+	OV7725_Info.FrameHandleSt = Frame_Capturing;
+}
+void OV7725_StopCapture(void)
+{
+	OV7725_WEN(0);
+	OV7725_FIFO_Delay();
+	OV7725_WRST(0);
+	OV7725_FIFO_Delay();
+	OV7725_WRST(1);
+	OV7725_Info.FrameHandleSt = Frame_Ready;
 }
 uint8_t OV7725_GetFrame(volatile uint16_t *pBuf, OV7725_GetFrameType_t Type)
 {
 	uint16_t Data;
 
-	if (OV7725_Info.FrameHandleSt == Frame_WaitFIFOReady)
+	if (OV7725_Info.FrameHandleSt != Frame_Ready)
 	{
 		return 0;
 	}
 	/* 读复位 */
-	OV7725_RRST(0);
-	OV7725_RCLK(0);
-	OV7725_RCLK(1);
-	OV7725_RRST(1);
-	OV7725_RCLK(0);
-	OV7725_RCLK(1);
+	OV7725_FIFO_ResetReadPtr();
 	for (uint16_t HeightIndex = 0; HeightIndex < OV7725_Info.OutputHeight; HeightIndex++)
 	{
 		for (uint16_t WidthIndex = 0; WidthIndex < OV7725_Info.OutputWidth; WidthIndex++)
 		{
 			/* 读数据 */
-			OV7725_RCLK(0);
-			Data = (OV7725_GetByteFormFIFO() << 8);
-			OV7725_RCLK(1);
-			
-			OV7725_RCLK(0);
-			Data |= OV7725_GetByteFormFIFO();
-			OV7725_RCLK(1);
-			
-			printf("%04X ",Data);
+			Data = ((uint16_t)OV7725_FIFO_ReadByte() << 8);
+			Data |= OV7725_FIFO_ReadByte();
 			*pBuf = Data;
 			switch (Type)
 			{
@@ -199,7 +258,7 @@ uint8_t OV7725_GetFrame(volatile uint16_t *pBuf, OV7725_GetFrameType_t Type)
 			}
 		}
 	}
-	OV7725_Info.FrameHandleSt = Frame_WaitFIFOReady;
+	OV7725_Info.FrameHandleSt = Frame_WaitFrameStart;
 	OV7725_Info.FrameCount++;
 
 	return 1;
@@ -217,14 +276,11 @@ void Task4_Camera(void *pvParameters)
 {
 	OV7725_SetMode();
 	OV7725_EnableOutput();
-	LCD_DisplayON();
-	LCD_SetDisplayDir(0);
-	LCD_SetScanDir(LeftToRight_TopToBottom);
-	LCD_SetWindow(0,0,LCD_Info.Width,LCD_Info.Height);
-	LCD_WriteREGNo(LCD_Command_MemoryWrite);
+	OV7725_LCD_PrepareFrame();
 	for(;;)
 	{
 		ulTaskNotifyTake(pdTRUE,portMAX_DELAY);
+		OV7725_LCD_PrepareFrame();
 		OV7725_GetFrame(&(LCD->LCD_RAM),OV7725_GET_FRAME_TYPE_NOINC);
 	}
 }
