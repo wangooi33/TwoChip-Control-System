@@ -1,31 +1,33 @@
 /* Includes ------------------------------------------------------------------*/
 #include "key.h"
-#include "BDC_Control.h"
 #include "BLDC_Control.h"
+
 /* private variable ----------------------------------------------------------*/
 uint8_t KeyCnt[KEY_NUM] = {0};
-uint8_t KeyState[KEY_NUM] = {0}; // 0:松开 1:按下
-// GPIO映射
-static GPIO_TypeDef* KEY_PORT[KEY_NUM] = 
+uint8_t KeyState[KEY_NUM] = {0};
+
+static GPIO_TypeDef* KEY_PORT[KEY_NUM] =
 {
-    KEY1_GPIO_Port, 
-	KEY2_GPIO_Port, 
+	KEY1_GPIO_Port,
+	KEY2_GPIO_Port,
 	KEY3_GPIO_Port,
-    KEY4_GPIO_Port, 
-    KEY5_GPIO_Port
+	KEY4_GPIO_Port,
+	KEY5_GPIO_Port
 };
-static uint16_t KEY_PIN[KEY_NUM] = 
+
+static uint16_t KEY_PIN[KEY_NUM] =
 {
-    KEY1_Pin, 
-	KEY2_Pin, 
-	KEY3_Pin, 
-	KEY4_Pin, 
+	KEY1_Pin,
+	KEY2_Pin,
+	KEY3_Pin,
+	KEY4_Pin,
 	KEY5_Pin
 };
-/* functions implementation --------------------------------------------------*/
-static KeyEvent_t KeyScan(void)
+
+/* local helpers -------------------------------------------------------------*/
+static KeyEvent_t KeyScan( void )
 {
-	for (int i = 0; i < KEY_NUM; i++)
+	for ( int i = 0; i < KEY_NUM; i++ )
 	{
 		if ( HAL_GPIO_ReadPin(KEY_PORT[i], KEY_PIN[i]) == GPIO_PIN_SET )
 		{
@@ -48,62 +50,42 @@ static KeyEvent_t KeyScan(void)
 	return KEY_NONE;
 }
 
-void KeyTask_Cyclic(void)
+/* public functions ----------------------------------------------------------*/
+void KeyTask_Cyclic( void )
 {
-	KeyEvent_t key = KeyScan();
-
-	switch (key)
+	switch ( KeyScan() )
 	{
-		case KEY1_PRESS:	// 启动
-			#if 0
-			BDC_Disable();
-			BDC_ResetControlState(&BDC_Info);
-			BDC_EncoderReset();
-			BDC_PIDInit();
-
-			BDC_Info.Expectation.ExpectedRPM = 60.0f;
-			BDC_Info.Expectation.ExpectedRPM_Ramp = 0.0f;
-			
-			BDC_Enable();
-			#endif
-			BLDC_Info.Direction = MOTOR_FWD;
-			BLDC_Info.Pulse = 600;
-
-			BLDC_Enable();
-			Hall_enable();
-		break;
-
-		case KEY2_PRESS:	// 停止
-			//BDC_Info.Expectation.ExpectedRPM = 0.0f;
-			BLDC_Disable();
-			Hall_Disable();
+		case KEY1_PRESS:
+			BLDC_SetDirection(MOTOR_FWD);
+			BLDC_SetPulse(BLDC_STARTUP_DUTY);
+			BLDC_Info.PositionCmdActive = 0U;
+			BLDC_Start();
 			break;
 
-		case KEY3_PRESS:	// 加速
-			//BDC_Info.Expectation.ExpectedRPM += 5.0f;
-			BLDC_Info.Pulse += 200;
+		case KEY2_PRESS:
+			BLDC_Stop();
 			break;
 
-		case KEY4_PRESS:	// 减速
-			//BDC_Info.Expectation.ExpectedRPM -= 5.0f;
-			BLDC_Info.Pulse -= 200;
+		case KEY3_PRESS:
+			BLDC_SetPulse((int32_t)BLDC_GetPulse() + 200);
 			break;
 
-		case KEY5_PRESS:	// 反转
-			//BDC_Info.Expectation.ExpectedRPM = -BDC_Info.Expectation.ExpectedRPM;
-			if ( BLDC_Info.Direction == MOTOR_FWD )
+		case KEY4_PRESS:
+			if ( BLDC_GetPulse() > (BLDC_STARTUP_DUTY + 200U) )
 			{
-				BLDC_Info.Direction = MOTOR_REV;
+				BLDC_SetPulse((int32_t)BLDC_GetPulse() - 200);
 			}
-			else if ( BLDC_Info.Direction == MOTOR_REV )
+			else
 			{
-				BLDC_Info.Direction = MOTOR_FWD;
+				BLDC_SetPulse(BLDC_STARTUP_DUTY);
 			}
+			break;
+
+		case KEY5_PRESS:
+			BLDC_SetDirection((BLDC_GetDirection(&BLDC_Info) == MOTOR_FWD) ? MOTOR_REV : MOTOR_FWD);
 			break;
 
 		default:
 			break;
 	}
 }
-
-

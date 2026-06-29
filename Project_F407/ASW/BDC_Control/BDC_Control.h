@@ -8,7 +8,6 @@ extern "C" {
 /* includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "tim.h"
-#include "adc.h"
 /* macro ---------------------------------------------------------------------*/
 #define BDC_MAX_CUR_TARGET		(10000.0f)								//10A
 #define BDC_MIN_CUR_TARGET		(-10000.0f)
@@ -77,11 +76,12 @@ extern int16_t EncoderLastCnt;
 /* functions prototypes ------------------------------------------------------*/
 void BDC_Disable( void );
 void BDC_Enable( void );
-void BDC_PIDInit( void );
-void BDC_EncoderReset( void );
+void BDC_Start( BDC_Info_t *pBDC, float expectedRPM );
+void BDC_PIDInit( BDC_Info_t *pBDC );
+void BDC_EncoderReset( BDC_Info_t *pBDC );
 void BDC_ResetControlState( BDC_Info_t *pBDC );
 
-void BDC_Cyclic( void );
+void BDC_Cyclic( BDC_Info_t *pBDC );
 
 
 #endif /*__BDC_CONTROL_H */

@@ -30,13 +30,15 @@
 #include "key.h"
 #include "beep.h"
 #include "BDC_Control.h"
+#include "BLDC_Control.h"
+#include "ec11.h"
 #include "timers.h"
 #include "w_adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S012";
+const char SoftWareID[] = "S013";
 
 /* USER CODE END PTD */
 
@@ -85,6 +87,7 @@ uint32_t GetTick_1ms(void)
 void Task_1ms()
 {
 	TimersManagerTask();
+	EC11_Cyclic(&EC11_Info);
 }
 void Task_2ms()
 {
@@ -92,8 +95,22 @@ void Task_2ms()
 }
 void Task_5ms()
 {
+	int32_t ec11_step_delta;
+
 	ADC_Cyclic();
-	BDC_Cyclic();
+	BDC_Cyclic(&BDC_Info);
+
+	if ( EC11_ConsumeResetEvent(&EC11_Info) != 0U )
+	{
+		BLDC_SetExpectedAngle(0.0f);
+	}
+
+	ec11_step_delta = EC11_ConsumeStepDelta(&EC11_Info);
+	if ( ec11_step_delta != 0 )
+	{
+		BLDC_SetExpectedAngle(BLDC_GetExpectedAngle() + ((float)ec11_step_delta * EC11_STEP_DEG));
+	}
+	BLDC_PositionTask();
 	BLDC_Cyclic();
 }
 void Task_10ms()
@@ -232,6 +249,7 @@ int main(void)
   MX_TIM8_Init();
   MX_USART2_UART_Init();
   MX_ADC3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -240,12 +258,17 @@ int main(void)
   HAL_ADC_Start_DMA(&hadc1,(uint32_t *)gADC1CaptureBuffer,ADC1_CAPTURE_BUF_MAXSIZE);
   HAL_ADC_Start_DMA(&hadc3,(uint32_t *)gADC3CaptureBuffer,ADC3_CAPTURE_BUF_MAXSIZE);
   BDC_Disable();
-  BDC_PIDInit();
+  BDC_PIDInit(&BDC_Info);
+  BLDC_Disable();
+  BLDC_PIDInit(&BLDC_Info);
+  BLDC_ResetControlState(&BLDC_Info);
+  BLDC_PositionReset(&BLDC_Info);
+  EC11_Init(&EC11_Info);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIMEx_ConfigCommutationEvent(&htim8,TIM_TS_ITR3,TIM_COMMUTATION_SOFTWARE);
-  Motoer_CurrentOffsetCalibrate(&BDC_Info,&BLDC_Info);
+  Motor_CurrentOffsetCalibrate(&BDC_Info,&BLDC_Info);
   /* USER CODE END 2 */
 
   /* Infinite loop */
