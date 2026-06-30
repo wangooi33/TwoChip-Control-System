@@ -38,7 +38,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S013";
+const char SoftWareID[] = "S014";
 
 /* USER CODE END PTD */
 
@@ -87,7 +87,6 @@ uint32_t GetTick_1ms(void)
 void Task_1ms()
 {
 	TimersManagerTask();
-	EC11_Cyclic(&EC11_Info);
 }
 void Task_2ms()
 {
@@ -95,21 +94,9 @@ void Task_2ms()
 }
 void Task_5ms()
 {
-	int32_t ec11_step_delta;
-
 	ADC_Cyclic();
 	BDC_Cyclic(&BDC_Info);
 
-	if ( EC11_ConsumeResetEvent(&EC11_Info) != 0U )
-	{
-		BLDC_SetExpectedAngle(0.0f);
-	}
-
-	ec11_step_delta = EC11_ConsumeStepDelta(&EC11_Info);
-	if ( ec11_step_delta != 0 )
-	{
-		BLDC_SetExpectedAngle(BLDC_GetExpectedAngle() + ((float)ec11_step_delta * EC11_STEP_DEG));
-	}
 	BLDC_PositionTask();
 	BLDC_Cyclic();
 }
@@ -249,7 +236,6 @@ int main(void)
   MX_TIM8_Init();
   MX_USART2_UART_Init();
   MX_ADC3_Init();
-  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -263,7 +249,6 @@ int main(void)
   BLDC_PIDInit(&BLDC_Info);
   BLDC_ResetControlState(&BLDC_Info);
   BLDC_PositionReset(&BLDC_Info);
-  EC11_Init(&EC11_Info);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
