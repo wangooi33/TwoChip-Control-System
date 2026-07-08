@@ -55,7 +55,7 @@ typedef struct
 	volatile uint8_t isEnable;
 	uint16_t OutputWidth;
 	uint16_t OutputHeight;
-	volatile uint16_t FrameCount;
+	SemaphoreHandle_t FrameCount;
 	volatile OV7725_HandleState_t FrameHandleSt;
 }OV7725_Info_t;
 

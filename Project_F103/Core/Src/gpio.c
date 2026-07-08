@@ -206,7 +206,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		else if (OV7725_Info.FrameHandleSt == Frame_Capturing)
 		{
 			OV7725_StopCapture();
-			vTaskNotifyGiveFromISR(wTaskHandle.Task4_CameraHandle,&pxHigherPriorityTaskWoken);
+			xSemaphoreGiveFromISR(OV7725_Info.FrameCount, &pxHigherPriorityTaskWoken);
 			portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
 		}
 	}

@@ -167,7 +167,12 @@ void OV7725_Init(void)
 	OV7725_RCLK(0);
 	OV7725_WEN(1);
 	OV7725_Info.isEnable = 0;
-	OV7725_Info.FrameCount = 0;
+	OV7725_Info.FrameCount = xSemaphoreCreateCounting(0xFFFF, 0);
+	if (OV7725_Info.FrameCount == NULL)
+	{
+		LED1_ON;
+		return;
+	}
 	OV7725_Info.FrameHandleSt = Frame_WaitFrameStart;
 
 	/* SCCB_Init */
@@ -259,7 +264,6 @@ uint8_t OV7725_GetFrame(volatile uint16_t *pBuf, OV7725_GetFrameType_t Type)
 		}
 	}
 	OV7725_Info.FrameHandleSt = Frame_WaitFrameStart;
-	OV7725_Info.FrameCount++;
 
 	return 1;
 }
@@ -279,7 +283,7 @@ void Task4_Camera(void *pvParameters)
 	OV7725_LCD_PrepareFrame();
 	for(;;)
 	{
-		ulTaskNotifyTake(pdTRUE,portMAX_DELAY);
+		xSemaphoreTake(OV7725_Info.FrameCount, portMAX_DELAY);
 		OV7725_LCD_PrepareFrame();
 		OV7725_GetFrame(&(LCD->LCD_RAM),OV7725_GET_FRAME_TYPE_NOINC);
 	}

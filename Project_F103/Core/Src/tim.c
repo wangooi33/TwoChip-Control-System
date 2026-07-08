@@ -516,8 +516,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 					}
 					else if (InfraredCtrl_isBit1(pulse))
 					{
-					InfraredCtrl_Framing(1);
-						}
+						InfraredCtrl_Framing(1);
+					}
 					else
 					{
 						InfraredCtrl_Reset();

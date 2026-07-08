@@ -3,15 +3,13 @@
 
 /* global variable ----------------------------------------------------------*/
 wTaskHandle_st wTaskHandle;
+static TimerHandle_t IWDGTimerHandle;
 
 /* function implementation --------------------------------------------------*/
-void Task5_IWDG(void *pvParameters)
+static void IWDG_TimerCallback(TimerHandle_t xTimer)
 {
-	for(;;)
-	{
-		HAL_IWDG_Refresh(&hiwdg);
-		vTaskDelay(pdMS_TO_TICKS(500));
-	}
+	(void)xTimer;
+	HAL_IWDG_Refresh(&hiwdg);
 }
 
 /**
@@ -32,7 +30,7 @@ static void TaskCreateError(uint8_t taskid)
 }
 static void AllTaskCreat(void *pvParameters)
 {
-	uint8_t xReturn = pdFAIL;
+	BaseType_t xReturn = pdFAIL;
 	
 	xReturn = xTaskCreate(Task1_RainbowRGB, "Task1_RGB", 64, NULL, 1, &wTaskHandle.Task1_RGBHandle);
 	if (xReturn != pdPASS)
@@ -53,7 +51,16 @@ static void AllTaskCreat(void *pvParameters)
 	}
 
 #if IWDG_ENABLE
-	xReturn = xTaskCreate(Task5_IWDG, "Task5_IWDG", 64, NULL, 3, &wTaskHandle.Task5_IWDGHandle);
+	IWDGTimerHandle = xTimerCreate("TmrIWDG",
+								   pdMS_TO_TICKS(500),
+								   pdTRUE,
+								   NULL,
+								   IWDG_TimerCallback);
+	if (IWDGTimerHandle == NULL)
+	{
+		TaskCreateError(5);
+	}
+	xReturn = xTimerStart(IWDGTimerHandle, 0);
 	if (xReturn != pdPASS)
 	{
 		TaskCreateError(5);
@@ -64,7 +71,7 @@ static void AllTaskCreat(void *pvParameters)
 }
 void RootTaskCreate(void *pvParameters)
 {
-	uint8_t xReturn = pdFAIL;
+	BaseType_t xReturn = pdFAIL;
 	
 	xReturn = xTaskCreate(AllTaskCreat, "RootTask", 512, NULL, 0, &wTaskHandle.Task0_RootHandle);
 	if (pdPASS != xReturn)
