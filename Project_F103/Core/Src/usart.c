@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include "IAP.h"
 #include "motor.h"
+#include "tjc.h"
 
 uint8_t gU1RxBuf[U1BUF_MAXSIZE];
 uint8_t gU2RxBuf[U2BUF_MAXSIZE];
@@ -418,7 +419,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 	}
 	if (huart->Instance == USART2)
 	{
+		TJC_RxProcessFromISR(gU2RxBuf, Size, &pxHigherPriorityTaskWoken);
 		HAL_UARTEx_ReceiveToIdle_DMA(&huart2,gU2RxBuf,U2BUF_MAXSIZE);
+		portYIELD_FROM_ISR(pxHigherPriorityTaskWoken);
 	}
 	if (huart->Instance == USART3)
 	{

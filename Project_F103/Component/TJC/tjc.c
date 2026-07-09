@@ -2,12 +2,14 @@
 
 /* global variable ----------------------------------------------------------*/
 TJC_Info_t TJC_Info;
+MessageBufferHandle_t TJCMotorMsgBuffer;
 
 /* function implementation --------------------------------------------------*/
 void TJC_Init(void)
 {
 	TJC_Info.CurrentPage = 1;
 	TJC_Info.Videoisplay = 0;
+	TJCMotorMsgBuffer = xMessageBufferCreate(TJC_MSGBUF_SIZE);
 }
 
 void TJC_ChangePage(uint8_t Page)
@@ -26,6 +28,30 @@ void TJC_ChangePage(uint8_t Page)
 	TxBuffer[index++] = 0xFF;
 	TxBuffer[index++] = 0xFF;
 	HAL_UART_Transmit(&huart2, TxBuffer, index, index*2);
+}
+
+void TJC_RxProcessFromISR(uint8_t *pBuf, uint16_t Size, BaseType_t *pxHigherPriorityTaskWoken)
+{
+	uint16_t offset = 0;
+
+	if ((pBuf == NULL) || (pxHigherPriorityTaskWoken == NULL))
+	{
+		return;
+	}
+
+	if (TJCMotorMsgBuffer == NULL)
+	{
+		return;
+	}
+
+	while ((offset + TJC_MOTORCMD_LENGTH) <= Size)
+	{
+		xMessageBufferSendFromISR(TJCMotorMsgBuffer,
+								  &pBuf[offset],
+								  TJC_MOTORCMD_LENGTH,
+								  pxHigherPriorityTaskWoken);
+		offset += TJC_MOTORCMD_LENGTH;
+	}
 }
 void TJC_ChangeVideoState(uint8_t id, uint8_t state)
 {

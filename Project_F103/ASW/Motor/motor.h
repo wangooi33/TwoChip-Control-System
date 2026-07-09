@@ -67,7 +67,6 @@ typedef struct
 
 /* global variable ----------------------------------------------------------*/
 extern Motor_Info_t Motor_Info;
-extern StreamBufferHandle_t CMotorStreamBuffer;
 extern QueueHandle_t CMotorQueue;
 
 /* functions prototypes -----------------------------------------------------*/
