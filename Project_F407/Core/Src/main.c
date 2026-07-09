@@ -34,11 +34,13 @@
 #include "ec11.h"
 #include "timers.h"
 #include "w_adc.h"
+#include "communication.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S014";
+const char SoftWareID[] = "S015";
 
 /* USER CODE END PTD */
 
@@ -97,6 +99,7 @@ void Task_5ms()
 	ADC_Cyclic();
 	BDC_Cyclic(&BDC_Info);
 
+	EC11_Cyclic();
 	BLDC_PositionTask();
 	BLDC_Cyclic();
 }
@@ -241,6 +244,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
+  EC11_Init();
   HAL_ADC_Start_DMA(&hadc1,(uint32_t *)gADC1CaptureBuffer,ADC1_CAPTURE_BUF_MAXSIZE);
   HAL_ADC_Start_DMA(&hadc3,(uint32_t *)gADC3CaptureBuffer,ADC3_CAPTURE_BUF_MAXSIZE);
   BDC_Disable();
@@ -254,6 +258,7 @@ int main(void)
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIMEx_ConfigCommutationEvent(&htim8,TIM_TS_ITR3,TIM_COMMUTATION_SOFTWARE);
   Motor_CurrentOffsetCalibrate(&BDC_Info,&BLDC_Info);
+  Com103_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */

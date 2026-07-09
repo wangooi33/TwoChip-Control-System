@@ -19,6 +19,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
+#include "communication.h"
 
 /* USER CODE BEGIN 0 */
 uint8_t gU1TxRxBuf[U1_TXRX_BUFMAX];
@@ -234,7 +235,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
     if (huart->Instance == USART1)
     {
-		
+        Com103_RxEventHandler(gU1TxRxBuf, Size);
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart1, gU1TxRxBuf, U1_TXRX_BUFMAX);
+        __HAL_DMA_DISABLE_IT(huart1.hdmarx, DMA_IT_HT);
 	}
 }
 /* USER CODE END 1 */

@@ -5,6 +5,8 @@
 /Project_F407/MDK-ARM/JLink*
 /Project_F407/MDK-ARM/*.ini
 /Project_F407/MDK-ARM/RTE/_Project_F407/
+/Project_F407/MDK-ARM/.scvd
+/Project_F407/MDK-ARM/.uvguix.王sir
 
 *.o
 *.d

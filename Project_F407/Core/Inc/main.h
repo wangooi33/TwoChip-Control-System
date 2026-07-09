@@ -42,7 +42,7 @@ extern "C" {
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
 extern volatile uint32_t SystemRunTime_1ms;
-
+extern const char SoftWareID[];
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

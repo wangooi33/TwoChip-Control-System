@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../ASW/BDC_Control;../ASW/beep;../ASW/key;../BSW/CheckData;../BSW/timers;../ASW/BLDC_Control;../BSW/w_adc;../Component/EC11</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../ASW/BDC_Control;../ASW/beep;../ASW/key;../BSW/CheckData;../BSW/timers;../ASW/BLDC_Control;../BSW/w_adc;../Component/EC11;../ASW/communication</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -842,6 +842,16 @@
               <FileName>beep.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\ASW\beep\beep.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>ASW/communication</GroupName>
+          <Files>
+            <File>
+              <FileName>communication.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ASW\communication\communication.c</FilePath>
             </File>
           </Files>
         </Group>
