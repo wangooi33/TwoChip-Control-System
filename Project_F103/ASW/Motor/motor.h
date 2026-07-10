@@ -68,8 +68,10 @@ typedef struct
 /* global variable ----------------------------------------------------------*/
 extern Motor_Info_t Motor_Info;
 extern QueueHandle_t CMotorQueue;
+extern QueueHandle_t CTaskQueue;
 
 /* functions prototypes -----------------------------------------------------*/
-
+void CMotor_Init(void);
+void Task6_ComMotorHandshake(void *pvParameters);
 
 #endif  /* __MOTOR_H */

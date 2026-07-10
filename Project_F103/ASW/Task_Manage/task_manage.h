@@ -27,6 +27,7 @@ typedef struct
 	TaskHandle_t Task2_IAPHandle;
 	TaskHandle_t Task3_IRCtrlHandle;
 	TaskHandle_t Task4_CameraHandle;
+	TaskHandle_t Task5_TJCCmdHandle;
 	TaskHandle_t Task6_CMotorHandshake;
 	TaskHandle_t Task7_CMotorRead;
 	TaskHandle_t Task8_CMotorWrite;

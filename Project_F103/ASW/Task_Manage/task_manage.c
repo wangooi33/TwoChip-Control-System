@@ -50,6 +50,13 @@ static void AllTaskCreat(void *pvParameters)
 		TaskCreateError(3);
 	}
 
+	CMotor_Init();
+	xReturn = xTaskCreate(Task6_ComMotorHandshake, "Task6_CMotor", 256, NULL, 2, &wTaskHandle.Task6_CMotorHandshake);
+	if (xReturn != pdPASS)
+	{
+		TaskCreateError(6);
+	}
+
 #if IWDG_ENABLE
 	IWDGTimerHandle = xTimerCreate("TmrIWDG",
 								   pdMS_TO_TICKS(500),

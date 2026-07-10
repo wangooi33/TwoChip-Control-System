@@ -10,6 +10,7 @@
 /* global variable ----------------------------------------------------------*/
 Motor_Info_t Motor_Info;
 QueueHandle_t CMotorQueue;
+QueueHandle_t CTaskQueue;
 SemaphoreHandle_t UsartMutex;
 
 CMotorDataTable_t BDC_Data[4] = 
@@ -34,7 +35,12 @@ void Task8_ComMotorWriteProcess(void *pvParameters);
 void CMotor_Init(void)
 {
 	CMotorQueue = xQueueCreate(5,CMOTOR_FRAME_LENGTH);
+	CTaskQueue = xQueueCreate(5,sizeof(MotorCmd_t));
 	UsartMutex = xSemaphoreCreateMutex();
+	if ((CMotorQueue == NULL) || (CTaskQueue == NULL) || (UsartMutex == NULL))
+	{
+		Error_Handler();
+	}
 	Motor_Info.CMotorState = CMotor_Handshake;
 	Motor_Info.ReadMotorType = BDC;
 }
@@ -137,8 +143,18 @@ void Task6_ComMotorHandshake(void *pvParameters)
 
 			case CMotor_HandshakeSucceed:
 				Motor_Info.CMotorState = CMotor_Communicating;
-				xTaskCreate(Task7_ComMotorReadProcess,"Task7_ComMotorRead",256,NULL,1,&wTaskHandle.Task7_CMotorRead);
-				xTaskCreate(Task8_ComMotorWriteProcess,"Task8_ComMotorWrite",128,NULL,3,&wTaskHandle.Task8_CMotorWrite);
+				if (xTaskCreate(TJC_ProcessMotorCmdTask, "Task5_TJCCmd", 256, NULL, 2, &wTaskHandle.Task5_TJCCmdHandle) != pdPASS)
+				{
+					Error_Handler();
+				}
+				if (xTaskCreate(Task7_ComMotorReadProcess,"Task7_ComMotorRead",256,NULL,1,&wTaskHandle.Task7_CMotorRead) != pdPASS)
+				{
+					Error_Handler();
+				}
+				if (xTaskCreate(Task8_ComMotorWriteProcess,"Task8_ComMotorWrite",128,NULL,3,&wTaskHandle.Task8_CMotorWrite) != pdPASS)
+				{
+					Error_Handler();
+				}
 				vTaskDelete(NULL);
 				break;
 
@@ -171,6 +187,7 @@ void Task7_ComMotorReadProcess(void *pvParameters)
 											   | (pBuf[CMOTOR_DATA_STARTINDEX + 1] << 16)
 											   | (pBuf[CMOTOR_DATA_STARTINDEX + 2] << 8)
 											   |  pBuf[CMOTOR_DATA_STARTINDEX + 3];
+							TJC_ReportMotorValue(RxFunid, BDC_Data[i].Data);
 						}
 					}
 				}
@@ -188,6 +205,7 @@ void Task7_ComMotorReadProcess(void *pvParameters)
 											    | (pBuf[CMOTOR_DATA_STARTINDEX + 1] << 16)
 											    | (pBuf[CMOTOR_DATA_STARTINDEX + 2] << 8)
 											    |  pBuf[CMOTOR_DATA_STARTINDEX + 3];
+							TJC_ReportMotorValue(RxFunid, BLDC_Data[i].Data);
 						}
 					}
 				}
@@ -203,21 +221,12 @@ void Task7_ComMotorReadProcess(void *pvParameters)
 void Task8_ComMotorWriteProcess(void *pvParameters)
 {
 	MotorCmd_t MotorCmd;
-	uint8_t TjcRxBuf[TJC_MOTORCMD_LENGTH];
 	uint8_t pBuf[12];
 	for (;;)
 	{
-		if ((TJCMotorMsgBuffer != NULL) &&
-			(xMessageBufferReceive(TJCMotorMsgBuffer,
-								  TjcRxBuf,
-								  sizeof(TjcRxBuf),
-								  portMAX_DELAY) == TJC_MOTORCMD_LENGTH))
+		if ((CTaskQueue != NULL) &&
+			(xQueueReceive(CTaskQueue, &MotorCmd, portMAX_DELAY) == pdTRUE))
 		{
-			MotorCmd.Funid = (CMotorFunid_t)(((uint16_t)TjcRxBuf[0] << 8) | TjcRxBuf[1]);
-			for (uint8_t i = 0; i < sizeof(MotorCmd.Data); i++)
-			{
-				MotorCmd.Data[i] = TjcRxBuf[i + 2];
-			}
 			ComMotorTransfer(MotorCmd.Funid, MotorCmd.Data, pBuf);
 		}
 	}
