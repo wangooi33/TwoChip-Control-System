@@ -57,9 +57,7 @@ void KeyTask_Cyclic( void )
 	{
 		case KEY1_PRESS:
 			BLDC_SetDirection(MOTOR_FWD);
-			BLDC_SetPulse(BLDC_STARTUP_DUTY);
-			BLDC_Info.PositionCmdActive = 0U;
-			BLDC_Start();
+			BLDC_SetExpectedCurrent(1200.0f);
 			break;
 
 		case KEY2_PRESS:
@@ -67,17 +65,17 @@ void KeyTask_Cyclic( void )
 			break;
 
 		case KEY3_PRESS:
-			BLDC_SetPulse((int32_t)BLDC_GetPulse() + 200);
+			BLDC_SetExpectedCurrent(BLDC_GetExpectedCurrent() + 200.0f);
 			break;
 
 		case KEY4_PRESS:
-			if ( BLDC_GetPulse() > (BLDC_STARTUP_DUTY + 200U) )
+			if ( BLDC_GetExpectedCurrent() > 400.0f )
 			{
-				BLDC_SetPulse((int32_t)BLDC_GetPulse() - 200);
+				BLDC_SetExpectedCurrent(BLDC_GetExpectedCurrent() - 200.0f);
 			}
 			else
 			{
-				BLDC_SetPulse(BLDC_STARTUP_DUTY);
+				BLDC_SetExpectedCurrent(200.0f);
 			}
 			break;
 

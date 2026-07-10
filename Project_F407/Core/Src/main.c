@@ -40,7 +40,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S015";
+const char SoftWareID[] = "S016";
 
 /* USER CODE END PTD */
 
@@ -100,7 +100,6 @@ void Task_5ms()
 	BDC_Cyclic(&BDC_Info);
 
 	EC11_Cyclic();
-	BLDC_PositionTask();
 	BLDC_Cyclic();
 }
 void Task_10ms()

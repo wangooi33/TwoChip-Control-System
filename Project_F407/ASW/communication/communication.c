@@ -139,14 +139,6 @@ static void prvCom103_HandleBLDCWrite( C103Funid_t Funid, int32_t Value )
             {
                 BLDC_Stop();
             }
-            else
-            {
-                BLDC_SetPulse(BLDC_STARTUP_DUTY);
-                if ( BLDC_Info.MotorRunning == 0U )
-                {
-                    BLDC_Start();
-                }
-            }
             break;
 
         case CMid_WriteBLDC_Pos:
@@ -154,14 +146,10 @@ static void prvCom103_HandleBLDCWrite( C103Funid_t Funid, int32_t Value )
             break;
 
         case CMid_WriteBLDC_Cur:
-            BLDC_SetPulse(Value);
+            BLDC_SetExpectedCurrent((float)Value);
             if ( Value <= 0 )
             {
                 BLDC_Stop();
-            }
-            else if ( BLDC_Info.MotorRunning == 0U )
-            {
-                BLDC_Start();
             }
             break;
 
