@@ -464,6 +464,19 @@ void BLDC_SetExpectedAngle( float expectedAngleDeg )
 	BLDC_Info.PositionCmdActive = 1U;
 }
 
+void BLDC_AddExpectedAngle( float deltaAngleDeg )
+{
+	float base_angle = BLDC_Info.ExpectedAngleDeg;
+
+	/* 如果当前位置环未激活，则以当前反馈角度作为新的增量起点。 */
+	if ( BLDC_Info.CtrlMode != BLDC_CTRL_POSITION || BLDC_Info.PositionCmdActive == 0U )
+	{
+		base_angle = BLDC_Info.CurrentAngleDeg;
+	}
+
+	BLDC_SetExpectedAngle(base_angle + deltaAngleDeg);
+}
+
 float BLDC_GetExpectedAngle( void )
 {
 	return BLDC_Info.ExpectedAngleDeg;

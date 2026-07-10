@@ -194,6 +194,7 @@ float BLDC_GetExpectedRPM( void );
 void BLDC_SetExpectedCurrent( float expectedCurrent );
 float BLDC_GetExpectedCurrent( void );
 void BLDC_SetExpectedAngle( float expectedAngleDeg );
+void BLDC_AddExpectedAngle( float deltaAngleDeg );
 float BLDC_GetExpectedAngle( void );
 float BLDC_GetCurrentAngle( void );
 void BLDC_SetPulse( int32_t duty );
