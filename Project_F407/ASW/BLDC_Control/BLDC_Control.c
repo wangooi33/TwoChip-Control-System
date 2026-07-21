@@ -94,7 +94,7 @@ static void prvBLDC_PIDReset( BLDC_PID_Pos_t *pPID )
 	pPID->Output = 0.0f;
 }
 
-/* 切换控制模式时清空各环路的积分和历史状态。 */
+/* 切换控制模式时清空各环路的积分和历史状态�?*/
 static void prvBLDC_ResetAllLoopState( BLDC_Info_t *pBLDC )
 {
 	prvBLDC_PIDReset(&pBLDC->PIDPos_SpeedLoop);
@@ -123,7 +123,7 @@ static void prvBLDC_RampTargetRPM( BLDC_Info_t *pBLDC )
 	}
 }
 
-/* 取三相电流绝对值中的最大值，作为电流环和保护的反馈量。 */
+/* 取三相电流绝对值中的最大值，作为电流环和保护的反馈量�?*/
 static float prvBLDC_GetCurrentMagnitude( const BLDC_Info_t *pBLDC )
 {
 	float iu = fabsf(pBLDC->CurrentPhase.U_PhaseCurrent);
@@ -347,7 +347,7 @@ static int8_t prvBLDC_GetHallStepDelta( uint8_t previousHall, uint8_t currentHal
 	return 0;
 }
 
-/* 消费最新一次Hall沿，更新转速估算，再刷新当前换相。 */
+/* 消费最新一次Hall沿，更新转速估算，再刷新当前换相�?*/
 static void prvBLDC_HallCyclic( void )
 {
 	uint8_t hall;
@@ -468,7 +468,7 @@ void BLDC_AddExpectedAngle( float deltaAngleDeg )
 {
 	float base_angle = BLDC_Info.ExpectedAngleDeg;
 
-	/* 如果当前位置环未激活，则以当前反馈角度作为新的增量起点。 */
+	/* 如果当前位置环未激活，则以当前反馈角度作为新的增量起点�?*/
 	if ( BLDC_Info.CtrlMode != BLDC_CTRL_POSITION || BLDC_Info.PositionCmdActive == 0U )
 	{
 		base_angle = BLDC_Info.CurrentAngleDeg;
@@ -512,7 +512,7 @@ void BLDC_Enable( void )
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
 }
 
-/* 重新启动功率级，但保留当前外环目标量不丢失。 */
+/* 重新启动功率级，但保留当前外环目标量不丢失�?*/
 void BLDC_Start( void )
 {
 	uint16_t start_pulse = BLDC_Info.Pulse;
@@ -558,7 +558,7 @@ void BLDC_SetPulse( int32_t duty )
 	}
 }
 
-/* 位置环和速度环都先输出电流目标，再由电流环闭合到PWM占空比。 */
+/* 位置环和速度环都先输出电流目标，再由电流环闭合到PWM占空比�?*/
 void BLDC_ControlTask( void )
 {
 	float position_cur_cmd = 0.0f;
@@ -573,7 +573,7 @@ void BLDC_ControlTask( void )
 	switch ( BLDC_Info.CtrlMode )
 	{
 		case BLDC_CTRL_POSITION:
-			/* 位置环先判断方向，再输出带符号的电流需求。 */
+			/* 位置环先判断方向，再输出带符号的电流需求�?*/
 			if ( BLDC_Info.PositionCmdActive == 0U )
 			{
 				return;
@@ -612,7 +612,7 @@ void BLDC_ControlTask( void )
 			break;
 
 		case BLDC_CTRL_SPEED:
-			/* 速度环在斜坡处理后的转速给定基础上输出电流需求。 */
+			/* 速度环在斜坡处理后的转速给定基础上输出电流需求�?*/
 			prvBLDC_RampTargetRPM(&BLDC_Info);
 			speed_cur_cmd = prvBLDC_SpeedPID_Calc(&BLDC_Info,
 												  BLDC_Info.ExpectedRPM_Ramp,
@@ -621,7 +621,7 @@ void BLDC_ControlTask( void )
 			break;
 
 		case BLDC_CTRL_CURRENT:
-			/* 电流模式直接绕过外环。 */
+			/* 电流模式直接绕过外环�?*/
 			current_target = BLDC_Info.ExpectedCurrent;
 			break;
 
@@ -635,7 +635,7 @@ void BLDC_ControlTask( void )
 
 	if ( current_target <= 0.0f )
 	{
-		/* 在速度/电流模式下，电流目标为0时可以直接释放功率级。 */
+		/* 在速度/电流模式下，电流目标�?时可以直接释放功率级�?*/
 		if ( BLDC_Info.CtrlMode != BLDC_CTRL_POSITION )
 		{
 			BLDC_Stop();
@@ -643,7 +643,7 @@ void BLDC_ControlTask( void )
 		return;
 	}
 
-	/* 电流内环把电流误差换算成PWM占空比指令。 */
+	/* 电流内环把电流误差换算成PWM占空比指令�?*/
 	duty_cmd = (uint16_t)prvBLDC_CurrentPID_Calc(&BLDC_Info,
 												 current_target,
 												 current_feedback);
@@ -752,7 +752,7 @@ uint8_t Hall_GetState( void )
 	return State;
 }
 
-/* 每个有效Hall跳变都对应机械角度前进一步。 */
+/* 每个有效Hall跳变都对应机械角度前进一步�?*/
 void BLDC_OnHallTransition( uint8_t previousHall, uint8_t currentHall )
 {
 	int8_t step_delta = prvBLDC_GetHallStepDelta(previousHall, currentHall);
@@ -827,7 +827,7 @@ MotorDir_t BLDC_GetDirection( BLDC_Info_t *pBLDC )
 	return pBLDC->Direction;
 }
 
-/* 软限流逐步减小占空比，硬过流则立即停机。 */
+/* 软限流逐步减小占空比，硬过流则立即停机�?*/
 void BLDC_CurrentProtect( void )
 {
 	float peak = prvBLDC_GetCurrentMagnitude(&BLDC_Info);
@@ -859,9 +859,15 @@ void BLDC_CurrentProtect( void )
 	}
 }
 
-/* 先处理Hall反馈，再跑串级控制，最后做电流保护。 */
+/* 先处理Hall反馈，再跑串级控制，最后做电流保护�?*/
 void BLDC_Cyclic( void )
 {
+	/* FOC ģʽ: �������������� FOC_Update �� 1ms �д��� */
+	if ( BLDC_Info.CtrlMode == BLDC_CTRL_FOC )
+	{
+		return;
+	}
+
 	if ( BLDC_Info.MotorStalling != 0U )
 	{
 		BLDC_TripStop();
@@ -879,3 +885,4 @@ void BLDC_Cyclic( void )
 		BLDC_CurrentProtect();
 	}
 }
+

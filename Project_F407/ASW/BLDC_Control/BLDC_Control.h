@@ -11,25 +11,25 @@ extern "C" {
 
 /* macro ---------------------------------------------------------------------*/
 /* 电流保护阈值和电流目标限幅 */
-#define BLDC_CURRENT_SOFT_LIMIT_mA		(5900.0f)	/* 超过该电流后开始逐步削减PWM。 */
-#define BLDC_CURRENT_RELEASE_mA			(5400.0f)	/* 软限流释放阈值，预留给滞回控制。 */
-#define BLDC_CURRENT_TRIP_mA			(7500.0f)	/* 硬件级过流停机阈值。 */
-#define BLDC_MAX_CUR_TARGET_mA			(5000.0f)	/* 电流环允许的最大目标电流。 */
-#define BLDC_CURRENT_LIMIT_KP			(0.08f)		/* 软限流时PWM削减增益。 */
+#define BLDC_CURRENT_SOFT_LIMIT_mA		(5900.0f)	/* 超过该电流后开始逐步削减PWM�?*/
+#define BLDC_CURRENT_RELEASE_mA			(5400.0f)	/* 软限流释放阈值，预留给滞回控制�?*/
+#define BLDC_CURRENT_TRIP_mA			(7500.0f)	/* 硬件级过流停机阈值�?*/
+#define BLDC_MAX_CUR_TARGET_mA			(5000.0f)	/* 电流环允许的最大目标电流�?*/
+#define BLDC_CURRENT_LIMIT_KP			(0.08f)		/* 软限流时PWM削减增益�?*/
 
 /* 电流内环参数 */
 #define BLDC_CURRENT_PID_KP				(0.80f)
 #define BLDC_CURRENT_PID_KI				(0.05f)
 #define BLDC_CURRENT_PID_KD				(0.00f)
 
-/* PWM驱动占空比限制 */
-#define BLDC_PWM_MIN_DUTY				(50U)		/* 限流后保持的最小占空比。 */
-#define BLDC_PWM_MAX_DUTY				(5600U)		/* 功率级允许的最大占空比。 */
-#define BLDC_STARTUP_DUTY				(600U)		/* 电机起转时保证换相的最小占空比。 */
+/* PWM驱动占空比限�?*/
+#define BLDC_PWM_MIN_DUTY				(50U)		/* 限流后保持的最小占空比�?*/
+#define BLDC_PWM_MAX_DUTY				(5600U)		/* 功率级允许的最大占空比�?*/
+#define BLDC_STARTUP_DUTY				(600U)		/* 电机起转时保证换相的最小占空比�?*/
 
-/* 速度环参数 */
-#define BLDC_MAX_RPM_TARGET				(6000.0f)	/* 速度给定上限。 */
-#define BLDC_RPM_RAMP_STEP				(20.0f)		/* 每次控制周期的速度斜坡步进。 */
+/* 速度环参�?*/
+#define BLDC_MAX_RPM_TARGET				(6000.0f)	/* 速度给定上限�?*/
+#define BLDC_RPM_RAMP_STEP				(20.0f)		/* 每次控制周期的速度斜坡步进�?*/
 #define BLDC_SPEED_PID_KP				(2.20f)
 #define BLDC_SPEED_PID_KI				(0.08f)
 #define BLDC_SPEED_PID_KD				(0.00f)
@@ -38,19 +38,19 @@ extern "C" {
 #define BLDC_POSITION_PID_KP			(80.0f)
 #define BLDC_POSITION_PID_KI			(0.00f)
 #define BLDC_POSITION_PID_KD			(4.00f)
-#define BLDC_POSITION_DEADBAND_DEG		(15.0f)		/* 到达目标角附近后的停止死区。 */
-#define BLDC_POSITION_MIN_CUR_mA		(900.0f)	/* 位置模式下维持转动的最小电流。 */
+#define BLDC_POSITION_DEADBAND_DEG		(15.0f)		/* 到达目标角附近后的停止死区�?*/
+#define BLDC_POSITION_MIN_CUR_mA		(900.0f)	/* 位置模式下维持转动的最小电流�?*/
 
 /* Hall测速和机械角度换算参数 */
-#define BLDC_POLE_PAIRS					(2U)		/* 电机极对数。 */
-#define BLDC_HALL_TIMER_HZ				(84000000UL / 84UL)	/* TIM5 Hall捕获计时频率。 */
-#define BLDC_HALL_MIN_TICKS				(8U)		/* 预留的Hall最小有效周期。 */
-#define BLDC_HALL_TIMEOUT_MS			(300U)		/* 预留的Hall超时窗口。 */
-#define BLDC_MECH_SECTORS_PER_REV		(6U * BLDC_POLE_PAIRS)	/* 机械一圈对应的Hall扇区数。 */
-#define BLDC_MECH_DEG_PER_SECTOR		(360.0f / (float)BLDC_MECH_SECTORS_PER_REV)	/* 每个Hall步进对应的机械角度。 */
+#define BLDC_POLE_PAIRS					(2U)		/* 电机极对数�?*/
+#define BLDC_HALL_TIMER_HZ				(84000000UL / 84UL)	/* TIM5 Hall捕获计时频率�?*/
+#define BLDC_HALL_MIN_TICKS				(8U)		/* 预留的Hall最小有效周期�?*/
+#define BLDC_HALL_TIMEOUT_MS			(300U)		/* 预留的Hall超时窗口�?*/
+#define BLDC_MECH_SECTORS_PER_REV		(6U * BLDC_POLE_PAIRS)	/* 机械一圈对应的Hall扇区数�?*/
+#define BLDC_MECH_DEG_PER_SECTOR		(360.0f / (float)BLDC_MECH_SECTORS_PER_REV)	/* 每个Hall步进对应的机械角度�?*/
 
-#define BLDC_SD_ENABLE()				HAL_GPIO_WritePin(BLDC_SD_GPIO_Port,BLDC_SD_Pin,GPIO_PIN_SET)	/* 使能驱动器。 */
-#define BLDC_SD_DISABLE()				HAL_GPIO_WritePin(BLDC_SD_GPIO_Port,BLDC_SD_Pin,GPIO_PIN_RESET)	/* 关闭驱动器。 */
+#define BLDC_SD_ENABLE()				HAL_GPIO_WritePin(BLDC_SD_GPIO_Port,BLDC_SD_Pin,GPIO_PIN_SET)	/* 使能驱动器�?*/
+#define BLDC_SD_DISABLE()				HAL_GPIO_WritePin(BLDC_SD_GPIO_Port,BLDC_SD_Pin,GPIO_PIN_RESET)	/* 关闭驱动器�?*/
 
 /* enum ----------------------------------------------------------------------*/
 typedef enum
@@ -70,6 +70,7 @@ typedef enum
 typedef enum
 {
 	BLDC_CTRL_SPEED = 0,
+	BLDC_CTRL_FOC,
 	BLDC_CTRL_POSITION,
 	BLDC_CTRL_CURRENT,
 }BLDC_CtrlMode_t;
@@ -214,3 +215,4 @@ void BLDC_Cyclic( void );
 #endif
 
 #endif /* __BLDC_CONTROL_H */
+

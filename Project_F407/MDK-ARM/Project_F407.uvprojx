@@ -823,6 +823,11 @@
               <FileType>1</FileType>
               <FilePath>..\ASW\BLDC_Control\BLDC_Control.c</FilePath>
             </File>
+            <File>
+              <FileName>FOC.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ASW\BLDC_Control\FOC.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

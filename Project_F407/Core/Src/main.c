@@ -35,12 +35,13 @@
 #include "timers.h"
 #include "w_adc.h"
 #include "communication.h"
+#include "FOC.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S017";
+const char SoftWareID[] = "S018";
 
 /* USER CODE END PTD */
 
@@ -89,6 +90,7 @@ uint32_t GetTick_1ms(void)
 void Task_1ms()
 {
 	TimersManagerTask();
+	FOC_Update();
 }
 void Task_2ms()
 {
@@ -258,6 +260,7 @@ int main(void)
   HAL_TIMEx_ConfigCommutationEvent(&htim8,TIM_TS_ITR3,TIM_COMMUTATION_SOFTWARE);
   Motor_CurrentOffsetCalibrate(&BDC_Info,&BLDC_Info);
   Com103_Init();
+  FOC_Init();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -352,3 +355,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
