@@ -29,7 +29,6 @@
 /* USER CODE BEGIN Includes */
 #include "key.h"
 #include "beep.h"
-#include "BDC_Control.h"
 #include "BLDC_Control.h"
 #include "ec11.h"
 #include "timers.h"
@@ -41,7 +40,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S019";
+const char SoftWareID[] = "S020";
 
 /* USER CODE END PTD */
 
@@ -99,7 +98,6 @@ void Task_2ms()
 void Task_5ms()
 {
 	ADC_Cyclic();
-	BDC_Cyclic(&BDC_Info);
 
 	EC11_Cyclic();
 	BLDC_Cyclic();
@@ -232,24 +230,17 @@ int main(void)
   MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_CRC_Init();
-  MX_TIM1_Init();
   MX_TIM7_Init();
   MX_TIM3_Init();
-  MX_ADC1_Init();
   MX_TIM5_Init();
   MX_TIM8_Init();
   MX_USART2_UART_Init();
   MX_ADC3_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim7);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
   HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
   EC11_Init();
-  HAL_ADC_Start_DMA(&hadc1,(uint32_t *)gADC1CaptureBuffer,ADC1_CAPTURE_BUF_MAXSIZE);
   HAL_ADC_Start_DMA(&hadc3,(uint32_t *)gADC3CaptureBuffer,ADC3_CAPTURE_BUF_MAXSIZE);
-  BDC_Disable();
-  BDC_PIDInit(&BDC_Info);
   BLDC_Disable();
   BLDC_PIDInit(&BLDC_Info);
   BLDC_ResetControlState(&BLDC_Info);
@@ -258,9 +249,12 @@ int main(void)
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
   HAL_TIMEx_ConfigCommutationEvent(&htim8,TIM_TS_ITR3,TIM_COMMUTATION_SOFTWARE);
-  Motor_CurrentOffsetCalibrate(&BDC_Info,&BLDC_Info);
+  Motor_CurrentOffsetCalibrate(&BLDC_Info);
   Com103_Init();
   FOC_Init();
+  BLDC_SetFOCMode();          /* 默认 FOC 模式, 六步换相不再使用 */
+  FOC_SetSpeedRef(0.0f);      /* 默认速度目标 0, 使能但不转 */
+  BLDC_Start();               /* 启动 FOC: Hall + TIM8 + PWM */
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -355,4 +349,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-

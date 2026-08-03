@@ -1,6 +1,5 @@
 #include "communication.h"
 #include "usart.h"
-#include "BDC_Control.h"
 #include "BLDC_Control.h"
 #include <math.h>
 #include <string.h>
@@ -80,17 +79,6 @@ static int32_t prvCom103_ReadValue( C103Funid_t Funid )
 {
     switch ( Funid )
     {
-        case CMid_ReadBDC_RPM:
-            return prvCom103_RoundToS32(BDC_Info.RPM);
-
-        case CMid_ReadBDC_Pos:
-            return prvCom103_RoundToS32(BDC_Info.PulseCnt);
-
-        case CMid_ReadBDC_Cur:
-            return prvCom103_RoundToS32(BDC_Info.CurrentRealTime);
-
-        case CMid_ReadBDC_PowerVoltage:
-            return prvCom103_RoundToS32(BDC_Info.PowerVoltage * 1000.0f);
 
         case CMid_ReadBLDC_RPM:
             return prvCom103_RoundToS32(BLDC_Info.RPM);
@@ -106,28 +94,6 @@ static int32_t prvCom103_ReadValue( C103Funid_t Funid )
     }
 }
 
-static void prvCom103_HandleBDCWrite( C103Funid_t Funid, int32_t Value )
-{
-    switch ( Funid )
-    {
-        case CMid_WriteBDC_RPM:
-            BDC_Start(&BDC_Info, (float)Value);
-            break;
-
-        case CMid_WriteBDC_Pos:
-            /* Current BDC control loop is speed/current based only, so keep the target for host-side visibility. */
-            BDC_Info.Expectation.ExpectedPos = (float)Value;
-            break;
-
-        case CMid_WriteBDC_Cur:
-            /* Current BDC control loop does not expose a dedicated current command mode. */
-            BDC_Info.Expectation.ExpectedCur = (float)Value;
-            break;
-
-        default:
-            break;
-    }
-}
 
 static void prvCom103_HandleBLDCWrite( C103Funid_t Funid, int32_t Value )
 {
@@ -162,11 +128,6 @@ static void prvCom103_HandleWriteCommand( C103Funid_t Funid, int32_t Value )
 {
     switch ( Funid )
     {
-        case CMid_WriteBDC_RPM:
-        case CMid_WriteBDC_Pos:
-        case CMid_WriteBDC_Cur:
-            prvCom103_HandleBDCWrite(Funid, Value);
-            break;
 
         case CMid_WriteBLDC_RPM:
         case CMid_WriteBLDC_Pos:
@@ -184,13 +145,7 @@ static uint8_t prvCom103_IsSupportedFunid( C103Funid_t Funid )
     switch ( Funid )
     {
         case CMid_Handshake:
-        case CMid_ReadBDC_RPM:
-        case CMid_ReadBDC_Pos:
-        case CMid_ReadBDC_Cur:
-        case CMid_ReadBDC_PowerVoltage:
-        case CMid_WriteBDC_RPM:
-        case CMid_WriteBDC_Pos:
-        case CMid_WriteBDC_Cur:
+
         case CMid_ReadBLDC_RPM:
         case CMid_ReadBLDC_Pos:
         case CMid_ReadBLDC_Cur:
@@ -295,10 +250,6 @@ void Com103_RxEventHandler( uint8_t *pBuf, uint16_t Size )
             Com103_TxProcess(tx_data, funid);
             break;
 
-        case CMid_ReadBDC_RPM:
-        case CMid_ReadBDC_Pos:
-        case CMid_ReadBDC_Cur:
-        case CMid_ReadBDC_PowerVoltage:
         case CMid_ReadBLDC_RPM:
         case CMid_ReadBLDC_Pos:
         case CMid_ReadBLDC_Cur:
@@ -306,9 +257,6 @@ void Com103_RxEventHandler( uint8_t *pBuf, uint16_t Size )
             Com103_TxProcess(tx_data, funid);
             break;
 
-        case CMid_WriteBDC_RPM:
-        case CMid_WriteBDC_Pos:
-        case CMid_WriteBDC_Cur:
         case CMid_WriteBLDC_RPM:
         case CMid_WriteBLDC_Pos:
         case CMid_WriteBLDC_Cur:

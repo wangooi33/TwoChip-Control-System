@@ -22,14 +22,6 @@ typedef enum
 {
     CMid_Handshake = 0x0100,
 
-    CMid_ReadBDC_RPM = 0x1101,
-    CMid_ReadBDC_Pos = 0x1102,
-    CMid_ReadBDC_Cur = 0x1103,
-    CMid_ReadBDC_PowerVoltage = 0x1104,
-
-    CMid_WriteBDC_RPM = 0x1201,
-    CMid_WriteBDC_Pos = 0x1202,
-    CMid_WriteBDC_Cur = 0x1203,
 
     CMid_ReadBLDC_RPM = 0x2101,
     CMid_ReadBLDC_Pos = 0x2102,

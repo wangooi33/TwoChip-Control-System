@@ -137,7 +137,7 @@
             <DriverSelection>4101</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>BIN\UL2V8M.DLL</Flash2>
+          <Flash2>BIN\UL2CM3.DLL</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F407xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../ASW/BDC_Control;../ASW/beep;../ASW/key;../BSW/CheckData;../BSW/timers;../ASW/BLDC_Control;../BSW/w_adc;../Component/EC11;../ASW/communication</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;../Drivers/CMSIS/Include;../ASW/beep;../ASW/key;../BSW/CheckData;../BSW/timers;../ASW/BLDC_Control;../BSW/PID;../BSW/w_adc;../Component/EC11;../ASW/communication</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -806,16 +806,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>ASW/BDC_Control</GroupName>
-          <Files>
-            <File>
-              <FileName>BDC_Control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\ASW\BDC_Control\BDC_Control.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>ASW/BLDC_Control</GroupName>
           <Files>
             <File>
@@ -827,6 +817,16 @@
               <FileName>FOC.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\ASW\BLDC_Control\FOC.c</FilePath>
+            </File>
+            <File>
+              <FileName>Hall.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ASW\BLDC_Control\Hall.c</FilePath>
+            </File>
+            <File>
+              <FileName>SixStep.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\ASW\BLDC_Control\SixStep.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -867,6 +867,16 @@
               <FileName>ec11.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Component\EC11\ec11.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>BSW/PID</GroupName>
+          <Files>
+            <File>
+              <FileName>pid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSW\PID\pid.c</FilePath>
             </File>
           </Files>
         </Group>

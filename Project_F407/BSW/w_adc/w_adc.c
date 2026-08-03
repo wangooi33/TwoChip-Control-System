@@ -1,113 +1,180 @@
+/* =============================================================================
+ *  w_adc.c — 母线电压 / 三相电流 / 温度采样链路
+ *
+ *  采样结果直接写入 BLDC_Info, 不再维护重复的采样结构。
+ * ==========================================================================*/
+
 /* Includes ------------------------------------------------------------------*/
 #include "w_adc.h"
 #include "beep.h"
 #include <math.h>
 
-/* local constants -----------------------------------------------------------*/
-#define ADC_REF_VOLTAGE         (3.3f)           /* ADC参考电压。 */
-#define ADC_MAX_COUNTS          (4095.0f)        /* 12位ADC满量程计数。 */
-#define ADC1_VBUS_SCALE         (37.0f)          /* BDC/BLDC母线电压分压比例。 */
-#define ADC1_CURR_GAIN          (8.0f * 0.02f)   /* BDC电流采样增益：放大倍数 * 分流电阻。 */
-#define ADC3_CURR_GAIN          (8.0f * 0.02f)   /* BLDC相电流采样增益：放大倍数 * 分流电阻。 */
-#define ADC_VBUS_OFFSET_V       (1.24f)          /* 母线电压采样通道的硬件偏置。 */
-#define ADC_TEMP_PULLUP_OHM     (4700.0f)        /* NTC上拉电阻阻值。 */
-#define ADC_TEMP_R25_OHM        (10000.0f)       /* NTC在25摄氏度时的阻值。 */
-#define ADC_TEMP_BETA           (3950.0f)        /* NTC的Beta常数。 */
-
-/* local helpers -------------------------------------------------------------*/
-static float prvADC_RawToVolt( uint16_t raw )
+/* =============================================================================
+ *  ADC 原始值 -> 电流 [A]
+ * ==========================================================================*/
+float ADC_to_Current( uint16_t raw, float offsetV )
 {
-	return ((float)raw * ADC_REF_VOLTAGE) / ADC_MAX_COUNTS;
+    float ampVoltage = (float)raw * ADC_V_PER_LSB;
+    float ampSignal  = ampVoltage - offsetV;
+    float current    = ampSignal / (ADC_AMP_GAIN * ADC_R_SHUNT);
+
+    return current;
 }
 
-static void prvBDC_ADCCollects( BDC_Info_t *pBDC )
+/* ADC 原始值 -> 母线电压 [V] */
+float ADC_to_BusVoltage( uint16_t raw )
 {
-	float vbus_v = prvADC_RawToVolt(gADC1CaptureBuffer[BDC_PowerVoltage]);
-	float curr_v = prvADC_RawToVolt(gADC1CaptureBuffer[BDC_MotorCurrent]);
-	float curr_mA = (curr_v - pBDC->CurrZeroOffsetV) / ADC1_CURR_GAIN * 1000.0f;
+    float vbus  = (float)raw * ADC_V_PER_LSB;
+    float power = vbus * ADC_DIV_RATIO;
 
-	/* 将ADC1原始采样值换算为母线电压和电机电流。 */
-	pBDC->PowerVoltage = (vbus_v - ADC_VBUS_OFFSET_V) * ADC1_VBUS_SCALE;
-
-	/* 做一次一阶低通，避免BDC电流反馈抖动过大。 */
-	pBDC->CurrFilt = 0.9f * pBDC->CurrFilt + 0.1f * curr_mA;
-	if ( pBDC->CurrFilt < 0.0f )
-	{
-		pBDC->CurrFilt = 0.0f;
-	}
-	pBDC->CurrentRealTime = pBDC->CurrFilt;
+    return power;
 }
 
-static float prvBLDC_TemperatureCal( void )
+/* ADC 原始值 -> NTC 阻值 [Ohm] */
+float ADC_to_Rt( uint16_t raw )
 {
-	float v_temp = prvADC_RawToVolt(gADC3CaptureBuffer[BLDC_MotorTemperature]);
+    float vTemp = (float)raw * ADC_V_PER_LSB;
 
-	/* 根据NTC分压和Beta模型换算电机温度。 */
-	float r_temp = (ADC_REF_VOLTAGE - v_temp) / (v_temp / ADC_TEMP_PULLUP_OHM);
-	float t25 = 273.15f + 25.0f;
-	float ka = 273.15f;
+    /* 开路保护 */
+    if ( vTemp < 0.001f )
+    {
+        return 999999.0f;
+    }
 
-	return ADC_TEMP_BETA * t25 / (ADC_TEMP_BETA + logf(r_temp / ADC_TEMP_R25_OHM) * t25) - ka;
+    return ADC_TEMP_R_FIXED * (ADC_REF_V / vTemp - 1.0f);
 }
 
-static void prvBLDC_ADCCollects( BLDC_Info_t *pBLDC )
+/* NTC 阻值 -> 温度 [C] */
+float Rt_to_Temperature( float rt )
 {
-	float vbus_v = prvADC_RawToVolt(gADC3CaptureBuffer[BLDC_PowerVoltage]);
+    /* 短路保护 */
+    if ( rt <= 0.0f )
+    {
+        return -273.15f;
+    }
 
-	/* 这里把母线电压和三相电流原始值统一换算成工程量。 */
-	pBLDC->PowerVoltage = (vbus_v - ADC_VBUS_OFFSET_V) * ADC1_VBUS_SCALE;
+    float ratio   = rt / ADC_TEMP_R0;
+    float lnRatio = logf(ratio);
+    float invT1   = lnRatio / ADC_TEMP_BETA + 1.0f / ADC_TEMP_T2;
 
-	pBLDC->CurrentPhase.U_PhaseCurrent =
-		(prvADC_RawToVolt(gADC3CaptureBuffer[BLDC_U_Current]) - pBLDC->CurrZeroOffsetV.U_PhaseSetV) / ADC3_CURR_GAIN * 1000.0f;
-	pBLDC->CurrentPhase.V_PhaseCurrent =
-		(prvADC_RawToVolt(gADC3CaptureBuffer[BLDC_V_Current]) - pBLDC->CurrZeroOffsetV.V_PhaseSetV) / ADC3_CURR_GAIN * 1000.0f;
-	pBLDC->CurrentPhase.W_PhaseCurrent =
-		(prvADC_RawToVolt(gADC3CaptureBuffer[BLDC_W_Current]) - pBLDC->CurrZeroOffsetV.W_PhaseSetV) / ADC3_CURR_GAIN * 1000.0f;
+    if ( invT1 <= 0.0f )
+    {
+        return -273.15f;
+    }
 
-	/* 相电流先滤波，再送入BLDC控制环路使用。 */
-	pBLDC->CurrFilt.U_CurrFilt = 0.9f * pBLDC->CurrFilt.U_CurrFilt + 0.1f * pBLDC->CurrentPhase.U_PhaseCurrent;
-	pBLDC->CurrFilt.V_CurrFilt = 0.9f * pBLDC->CurrFilt.V_CurrFilt + 0.1f * pBLDC->CurrentPhase.V_PhaseCurrent;
-	pBLDC->CurrFilt.W_CurrFilt = 0.9f * pBLDC->CurrFilt.W_CurrFilt + 0.1f * pBLDC->CurrentPhase.W_PhaseCurrent;
-
-	pBLDC->CurrentPhase.U_PhaseCurrent = pBLDC->CurrFilt.U_CurrFilt;
-	pBLDC->CurrentPhase.V_PhaseCurrent = pBLDC->CurrFilt.V_CurrFilt;
-	pBLDC->CurrentPhase.W_PhaseCurrent = pBLDC->CurrFilt.W_CurrFilt;
+    return 1.0f / invT1 - 273.15f;
 }
 
-/* public functions ----------------------------------------------------------*/
-void Motor_CurrentOffsetCalibrate( BDC_Info_t *pBDC, BLDC_Info_t *pBLDC )
+/* 三相电流采样入口: 写入 BLDC_Info (mA) */
+void ReadPhaseCurrents( void )
 {
-	uint32_t sum_bdc = 0;
-	uint32_t sum_bldc[3] = {0};
+    float offsetU = BLDC_Info.CurrZeroOffsetV.U_PhaseSetV;
+    float offsetV = BLDC_Info.CurrZeroOffsetV.V_PhaseSetV;
+    float offsetW = BLDC_Info.CurrZeroOffsetV.W_PhaseSetV;
 
-	/* 电机静止时做多次平均，得到各电流通道的零点偏置。 */
-	BEEP_ON;
-	for ( uint8_t i = 0; i < 200; i++ )
-	{
-		sum_bdc += gADC1CaptureBuffer[BDC_MotorCurrent];
-		sum_bldc[0] += gADC3CaptureBuffer[BLDC_U_Current];
-		sum_bldc[1] += gADC3CaptureBuffer[BLDC_V_Current];
-		sum_bldc[2] += gADC3CaptureBuffer[BLDC_W_Current];
-		HAL_Delay(2);
-	}
-	BEEP_OFF;
+    BLDC_Info.CurrentPhase.U_PhaseCurrent =
+        ADC_to_Current(gADC3CaptureBuffer[BLDC_U_Current], offsetU) * 1000.0f;
+    BLDC_Info.CurrentPhase.V_PhaseCurrent =
+        ADC_to_Current(gADC3CaptureBuffer[BLDC_V_Current], offsetV) * 1000.0f;
+    BLDC_Info.CurrentPhase.W_PhaseCurrent =
+        ADC_to_Current(gADC3CaptureBuffer[BLDC_W_Current], offsetW) * 1000.0f;
 
-	pBDC->CurrZeroOffsetV = ((float)sum_bdc / 200.0f) * ADC_REF_VOLTAGE / ADC_MAX_COUNTS;
-	pBDC->CurrFilt = 0.0f;
-	pBDC->CurrentRealTime = 0.0f;
+    /* 一阶低通滤波 */
+    BLDC_Info.CurrFilt.U_CurrFilt = 0.9f * BLDC_Info.CurrFilt.U_CurrFilt
+                                  + 0.1f * BLDC_Info.CurrentPhase.U_PhaseCurrent;
+    BLDC_Info.CurrFilt.V_CurrFilt = 0.9f * BLDC_Info.CurrFilt.V_CurrFilt
+                                  + 0.1f * BLDC_Info.CurrentPhase.V_PhaseCurrent;
+    BLDC_Info.CurrFilt.W_CurrFilt = 0.9f * BLDC_Info.CurrFilt.W_CurrFilt
+                                  + 0.1f * BLDC_Info.CurrentPhase.W_PhaseCurrent;
 
-	pBLDC->CurrZeroOffsetV.U_PhaseSetV = ((float)sum_bldc[0] / 200.0f) * ADC_REF_VOLTAGE / ADC_MAX_COUNTS;
-	pBLDC->CurrZeroOffsetV.V_PhaseSetV = ((float)sum_bldc[1] / 200.0f) * ADC_REF_VOLTAGE / ADC_MAX_COUNTS;
-	pBLDC->CurrZeroOffsetV.W_PhaseSetV = ((float)sum_bldc[2] / 200.0f) * ADC_REF_VOLTAGE / ADC_MAX_COUNTS;
-	pBLDC->CurrFilt.U_CurrFilt = 0.0f;
-	pBLDC->CurrFilt.V_CurrFilt = 0.0f;
-	pBLDC->CurrFilt.W_CurrFilt = 0.0f;
+    BLDC_Info.CurrentPhase.U_PhaseCurrent = BLDC_Info.CurrFilt.U_CurrFilt;
+    BLDC_Info.CurrentPhase.V_PhaseCurrent = BLDC_Info.CurrFilt.V_CurrFilt;
+    BLDC_Info.CurrentPhase.W_PhaseCurrent = BLDC_Info.CurrFilt.W_CurrFilt;
 }
 
+/* 母线电压采样入口 */
+void ReadBusVoltage( void )
+{
+    BLDC_Info.PowerVoltage = ADC_to_BusVoltage(gADC3CaptureBuffer[BLDC_PowerVoltage]);
+}
+
+/* 温度采样入口 */
+void ReadTemperature( void )
+{
+    float rt    = ADC_to_Rt(gADC3CaptureBuffer[BLDC_MotorTemperature]);
+    float tempC = Rt_to_Temperature(rt);
+
+    BLDC_Info.MotorTemperature = tempC;
+}
+
+/* 过压/欠压保护 */
+uint8_t CheckBusFault( void )
+{
+    if ( BLDC_Info.PowerVoltage > ADC_VBUS_OV_THRESH ||
+         BLDC_Info.PowerVoltage < ADC_VBUS_UV_THRESH )
+    {
+        BLDC_TripStop();
+        return 1U;
+    }
+    return 0U;
+}
+
+/* 过温保护 */
+uint8_t CheckTempFault( void )
+{
+    if ( BLDC_Info.MotorTemperature >= ADC_TEMP_OT_THRESH )
+    {
+        BLDC_TripStop();
+        return 1U;
+    }
+    return 0U;
+}
+
+/* SVPWM 模块取母线电压 (T1/T2 计算需要 Vdc) */
+float GetBusVoltage( void )
+{
+    return BLDC_Info.PowerVoltage;
+}
+
+/* Clarke 变换: 三相电流 -> 两相正交电流 */
+void Clarke( float iu, float iv, float *pAlpha, float *pBeta )
+{
+    *pAlpha = iu;
+    *pBeta  = (iu + 2.0f * iv) * 0.57735f;
+}
+
+/* 电流零点校准: 电机静止时采样 200 次取平均 */
+void Motor_CurrentOffsetCalibrate( BLDC_Info_t *pBLDC )
+{
+    uint32_t sumU = 0;
+    uint32_t sumV = 0;
+    uint32_t sumW = 0;
+
+    BEEP_ON;
+    for ( uint8_t i = 0; i < 200; i++ )
+    {
+        sumU += gADC3CaptureBuffer[BLDC_U_Current];
+        sumV += gADC3CaptureBuffer[BLDC_V_Current];
+        sumW += gADC3CaptureBuffer[BLDC_W_Current];
+        HAL_Delay(2);
+    }
+    BEEP_OFF;
+
+    pBLDC->CurrZeroOffsetV.U_PhaseSetV = ((float)sumU / 200.0f) * ADC_V_PER_LSB;
+    pBLDC->CurrZeroOffsetV.V_PhaseSetV = ((float)sumV / 200.0f) * ADC_V_PER_LSB;
+    pBLDC->CurrZeroOffsetV.W_PhaseSetV = ((float)sumW / 200.0f) * ADC_V_PER_LSB;
+    pBLDC->CurrFilt.U_CurrFilt = 0.0f;
+    pBLDC->CurrFilt.V_CurrFilt = 0.0f;
+    pBLDC->CurrFilt.W_CurrFilt = 0.0f;
+}
+
+/* ADC 周期任务: 采样 -> 换算 -> 保护 */
 void ADC_Cyclic( void )
 {
-	/* 周期刷新BDC/BLDC的电压、电流和温度测量值。 */
-	prvBDC_ADCCollects(&BDC_Info);
-	prvBLDC_ADCCollects(&BLDC_Info);
-	BLDC_Info.MotorTemperature = prvBLDC_TemperatureCal();
+    ReadPhaseCurrents();
+    ReadBusVoltage();
+    ReadTemperature();
+
+    CheckBusFault();
+    CheckTempFault();
 }

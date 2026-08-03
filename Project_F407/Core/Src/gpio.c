@@ -50,8 +50,8 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOI_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
@@ -61,7 +61,7 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(BLDC_SD_GPIO_Port, BLDC_SD_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, BEEP_Pin|BDC_SD_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(BEEP_GPIO_Port, BEEP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOH, BLDC_CH1N_Pin|BLDC_CH2N_Pin|BLDC_CH3N_Pin, GPIO_PIN_RESET);
@@ -119,7 +119,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(EC11_SW_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : BLDC_CH1N_Pin BLDC_CH2N_Pin BLDC_CH3N_Pin */
   GPIO_InitStruct.Pin = BLDC_CH1N_Pin|BLDC_CH2N_Pin|BLDC_CH3N_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -133,13 +132,6 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : BDC_SD_Pin */
-  GPIO_InitStruct.Pin = BDC_SD_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(BDC_SD_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED3_Pin */
   GPIO_InitStruct.Pin = LED3_Pin;
