@@ -20,6 +20,7 @@
 #include "main.h"
 #include "adc.h"
 #include "crc.h"
+#include "dac.h"
 #include "dma.h"
 #include "tim.h"
 #include "usart.h"
@@ -40,7 +41,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S021";
+const char SoftWareID[] = "S022";
 
 /* USER CODE END PTD */
 
@@ -235,6 +236,7 @@ int main(void)
   MX_TIM8_Init();
   MX_USART2_UART_Init();
   MX_ADC3_Init();
+  MX_DAC_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim7);
   HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);

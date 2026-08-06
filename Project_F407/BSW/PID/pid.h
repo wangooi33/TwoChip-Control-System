@@ -5,19 +5,6 @@
 extern "C" {
 #endif
 
-/* =============================================================================
- *  可移植 PID 模块
- *
- *  位置式 PID + 积分限幅 + 退积分反馈抗饱和:
- *    error  = ref - fdb
- *    integral += Ki * error * dt      (限幅到 IntLimit)
- *    output = Kp*error + integral + Kd*(error - PrevErr)/dt
- *    output 限幅到 Limit
- *    输出饱和时把差值 * Kb 反馈回积分器, 自动退积分
- *
- *  该模块不依赖任何硬件, 可直接复用到 BLDC / FOC / BDC 等控制环。
- * ==========================================================================*/
-
 /* 浮点数钳位工具 */
 static inline float Clampf( float value, float min, float max )
 {

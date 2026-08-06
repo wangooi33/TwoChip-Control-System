@@ -4,6 +4,7 @@
 #include "Hall.h"
 #include "w_adc.h"
 #include "tim.h"
+#include "dac.h"
 
 /* global variable -----------------------------------------------------------*/
 FOC_Info_t FOC_Info;
@@ -236,12 +237,37 @@ static void CurrentLoop( void )
     FOC_Info.Vq = vq;
 }
 
+/* DAC速度环调试:CH1(PA4) = SpeedRef_RPM, CH2(PA5) = SpeedRPM
+ 映射: ±3000 RPM -> 0~3.3V, 0 RPM = 1.65V */
+static void DAC_SpeedDebug( void )
+{
+	/* 转速换算成电压 */
+    float vRef = (FOC_Info.SpeedRef_RPM / 3000.0f) * 1.65f + 1.65f;
+    float vFdb = (FOC_Info.SpeedRPM / 3000.0f) * 1.65f + 1.65f;
+
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R,(uint32_t)(vRef * 4095.0f / 3.3f));
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R,(uint32_t)(vFdb * 4095.0f / 3.3f));
+}
+/* DAC位置环调试:CH1(PA4) = PositionRef_Deg, CH2(PA5) = PositionDeg
+ 映射: 0~360° -> 0~3.3V, 1° ≈ 9.17mV */
+static void DAC_PositionDebug( void )
+{
+    float vRef = (FOC_Info.PositionRef_Deg / 360.0f) * 3.3f;
+    float vFdb = (FOC_Info.PositionDeg / 360.0f) * 3.3f;
+
+    vRef = Clampf(vRef, 0.0f, 3.3f);
+    vFdb = Clampf(vFdb, 0.0f, 3.3f);
+
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_1, DAC_ALIGN_12B_R,(uint32_t)(vRef * 4095.0f / 3.3f));
+    HAL_DAC_SetValue(&hdac, DAC_CHANNEL_2, DAC_ALIGN_12B_R,(uint32_t)(vFdb * 4095.0f / 3.3f));
+}
+
 void FOC_Init( void )
 {
     PID_Init(&FOC_Info.PID_Id, FOC_KP_CURRENT, FOC_KI_CURRENT, 0.0f,
-             FOC_CURRENT_LIMIT_mA, FOC_CURRENT_LIMIT_mA * 0.5f, 0.5f, FOC_CTRL_PERIOD_S);
+             FOC_CURRENT_LIMIT_mA, FOC_CURRENT_LIMIT_mA * 0.5f, 0.5f, FOC_CURRENT_PERIOD_S);
     PID_Init(&FOC_Info.PID_Iq, FOC_KP_CURRENT, FOC_KI_CURRENT, 0.0f,
-             FOC_CURRENT_LIMIT_mA, FOC_CURRENT_LIMIT_mA * 0.5f, 0.5f, FOC_CTRL_PERIOD_S);
+             FOC_CURRENT_LIMIT_mA, FOC_CURRENT_LIMIT_mA * 0.5f, 0.5f, FOC_CURRENT_PERIOD_S);
     PID_Init(&FOC_Info.PID_Speed, FOC_KP_SPEED, FOC_KI_SPEED, 0.0f,
              FOC_SPEED_LIMIT_mA, FOC_SPEED_LIMIT_mA * 0.5f, 0.5f,
              (float)FOC_SPEED_LOOP_MS * 0.001f);
@@ -315,6 +341,67 @@ void FOC_Disable( void )
 }
 
 /* FOC_Update() — 1kHz 控制主循环 */
+/* FOC_CurrentISR() — 电流环 =*/
+void FOC_CurrentISR( void )
+{
+    float ia, ib, theta;
+    float vdc;
+    float vdNorm, vqNorm, vdReal, vqReal;
+    uint32_t duty[3];
+
+    if ( !FOC_Info.Enabled )
+    {
+        return;
+    }
+
+    /* 1. 三相电流 (复用 w_adc 换算) */
+    UpdateFOCCurrents();
+
+    /* 2. Hall 位置插值 */
+    HallPositionUpdate();
+
+    ia = FOC_Info.Iu_mA;
+    ib = FOC_Info.Iv_mA;
+    theta = FOC_Info.ThetaElec_Rad;
+
+    /* 3. Clarke: abc -> αβ */
+    Clarke(ia, ib, &FOC_Info.Ialpha_mA, &FOC_Info.Ibeta_mA);
+
+    /* 4. Park: αβ -> dq */
+    Park(FOC_Info.Ialpha_mA, FOC_Info.Ibeta_mA, theta,
+         &FOC_Info.Id_mA, &FOC_Info.Iq_mA);
+
+    /* 5. 电流环 */
+    CurrentLoop();
+
+    /* 6. 电压归一化 + 逆 Park */
+    vdc = BLDC_Info.PowerVoltage;
+    if ( vdc < 1.0f )
+    {
+        vdc = 24.0f;
+    }
+
+    vdNorm = FOC_Info.Vd / FOC_CURRENT_LIMIT_mA * FOC_VOLTAGE_LIMIT;
+    vqNorm = FOC_Info.Vq / FOC_CURRENT_LIMIT_mA * FOC_VOLTAGE_LIMIT;
+    vdNorm = Clampf(vdNorm, -1.0f, 1.0f);
+    vqNorm = Clampf(vqNorm, -1.0f, 1.0f);
+
+    vdReal = vdNorm * vdc * 0.5f;
+    vqReal = vqNorm * vdc * 0.5f;
+
+    InvPark(vdReal, vqReal, theta,
+            &FOC_Info.Valpha, &FOC_Info.Vbeta);
+
+    /* 7. SVPWM */
+    SVPWM(FOC_Info.Valpha, FOC_Info.Vbeta, duty);
+
+    /* 8. 更新 TIM8 CCR */
+    TIM8->CCR1 = duty[0];
+    TIM8->CCR2 = duty[1];
+    TIM8->CCR3 = duty[2];
+}
+
+/* FOC_Update() —  位置环(100ms) -> 速度环(10ms)*/
 void FOC_Update( void )
 {
     if ( !FOC_Info.Enabled )
@@ -324,64 +411,27 @@ void FOC_Update( void )
 
     FOC_Info.LoopCounter++;
 
-    /* 1. 三相电流 (复用 w_adc 换算) */
-    UpdateFOCCurrents();
-
-    /* 2. Hall 位置插值 */
-    HallPositionUpdate();
-    BLDC_Info.RPM = FOC_Info.SpeedRPM;   /* 同步到外部可读的转速 */
-
-    float ia = FOC_Info.Iu_mA;
-    float ib = FOC_Info.Iv_mA;
-    float theta = FOC_Info.ThetaElec_Rad;
-
-    /* 3. Clarke: abc -> αβ (复用 w_adc 通用变换) */
-    Clarke(ia, ib, &FOC_Info.Ialpha_mA, &FOC_Info.Ibeta_mA);
-
-    /* 4. Park: αβ -> dq */
-    Park(FOC_Info.Ialpha_mA, FOC_Info.Ibeta_mA, theta,&FOC_Info.Id_mA, &FOC_Info.Iq_mA);
-
-    /* 5. 外环: 位置环(100ms) -> 速度环(10ms) */
-    if (FOC_Info.LoopMode == FOC_LOOP_POSITION && (FOC_Info.LoopCounter % FOC_POSITION_LOOP_MS) == 0U)
+    /* 位置环: 100ms */
+    if ( FOC_Info.LoopMode == FOC_LOOP_POSITION &&
+         (FOC_Info.LoopCounter % FOC_POSITION_LOOP_MS) == 0U )
     {
         PositionLoop();
     }
 
-    if ((FOC_Info.LoopMode == FOC_LOOP_SPEED || FOC_Info.LoopMode == FOC_LOOP_POSITION) 
-		&& (FOC_Info.LoopCounter % FOC_SPEED_LOOP_MS) == 0U)
+    /* 速度环: 10ms */
+    if ( (FOC_Info.LoopMode == FOC_LOOP_SPEED ||
+          FOC_Info.LoopMode == FOC_LOOP_POSITION) &&
+         (FOC_Info.LoopCounter % FOC_SPEED_LOOP_MS) == 0U )
     {
         SpeedLoop();
     }
 
-    /* 6. 电流环 */
-    CurrentLoop();
+    /* 同步连续反馈到 BLDC_Info, 供外部读取 */
+    BLDC_Info.RPM = FOC_Info.SpeedRPM;
+    BLDC_Info.CurrentAngleDeg = FOC_Info.PositionDeg;
 
-    /* 7. 电压归一化 + 逆 Park */
-    float vdc = BLDC_Info.PowerVoltage;		/* ADC采样的母线电压 */
-    if ( vdc < 1.0f )
-    {
-        vdc = 24.0f;
-    }
-	//把电流环输出归一化到 [-1, 1]
-    float vdNorm = FOC_Info.Vd / FOC_CURRENT_LIMIT_mA * FOC_VOLTAGE_LIMIT;
-    float vqNorm = FOC_Info.Vq / FOC_CURRENT_LIMIT_mA * FOC_VOLTAGE_LIMIT;
-	//换算成实际电压
-    vdNorm = Clampf(vdNorm, -1.0f, 1.0f);
-    vqNorm = Clampf(vqNorm, -1.0f, 1.0f);
-	//把归一化值映射到真实电压.乘 vdc * 0.5 是因为在中心点电压参考系下,相电压最大幅值约等于母线电压的一半
-    float vdReal = vdNorm * vdc * 0.5f;
-    float vqReal = vqNorm * vdc * 0.5f;
-
-    InvPark(vdReal, vqReal, theta,&FOC_Info.Valpha, &FOC_Info.Vbeta);
-
-    /* 8. SVPWM */
-    uint32_t duty[3];
-    SVPWM(FOC_Info.Valpha, FOC_Info.Vbeta, duty);
-
-    /* 9. 更新 TIM8 CCR */
-    TIM8->CCR1 = duty[0];
-    TIM8->CCR2 = duty[1];
-    TIM8->CCR3 = duty[2];
+	//DAC_SpeedDebug();
+    //DAC_PositionDebug();
 }
 
 /* 目标给定 API */

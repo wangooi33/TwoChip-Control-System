@@ -37,6 +37,7 @@ extern "C" {
 
 /* 控制周期 */
 #define FOC_CTRL_PERIOD_S           (0.001f)
+#define FOC_CURRENT_PERIOD_S       (0.0001333f)  /* 7.5kHz 电流环周期 */
 
 /* 电流环 PID 参数 */
 #define FOC_KP_CURRENT              (0.60f)
@@ -132,6 +133,7 @@ void  FOC_Init( void );
 void  FOC_Enable( void );
 void  FOC_Disable( void );
 void  FOC_Update( void );
+void  FOC_CurrentISR( void );   /* TIM8 更新中断调用, 7.5kHz */
 
 /* 电流给定模式 */
 void  FOC_SetIqRef( float iq_mA );
