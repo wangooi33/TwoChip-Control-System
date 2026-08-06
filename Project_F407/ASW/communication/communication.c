@@ -1,6 +1,7 @@
 #include "communication.h"
 #include "usart.h"
 #include "BLDC_Control.h"
+#include "FOC.h"
 #include <math.h>
 #include <string.h>
 
@@ -15,12 +16,12 @@
 #define C103_RSP_TAIL_1             0x5E
 
 /* local helpers ------------------------------------------------------------*/
-static uint16_t prvCom103_GetFunid( const uint8_t *pBuf )
+static uint16_t Com103_GetFunid( const uint8_t *pBuf )
 {
     return ((uint16_t)pBuf[C103_FUNID_HIGH_INDEX] << 8) | pBuf[C103_FUNID_LOW_INDEX];
 }
 
-static int32_t prvCom103_GetS32( const uint8_t *pBuf )
+static int32_t Com103_GetS32( const uint8_t *pBuf )
 {
     uint32_t value = ((uint32_t)pBuf[C103_DATA_STARTINDEX] << 24)
                    | ((uint32_t)pBuf[C103_DATA_STARTINDEX + 1U] << 16)
@@ -30,7 +31,7 @@ static int32_t prvCom103_GetS32( const uint8_t *pBuf )
     return (int32_t)value;
 }
 
-static void prvCom103_PutS32( uint8_t *pBuf, int32_t value )
+static void Com103_PutS32( uint8_t *pBuf, int32_t value )
 {
     uint32_t raw = (uint32_t)value;
 
@@ -40,7 +41,7 @@ static void prvCom103_PutS32( uint8_t *pBuf, int32_t value )
     pBuf[3] = (uint8_t)raw;
 }
 
-static int32_t prvCom103_RoundToS32( float value )
+static int32_t Com103_RoundToS32( float value )
 {
     if ( value >= 0.0f )
     {
@@ -50,7 +51,7 @@ static int32_t prvCom103_RoundToS32( float value )
     return (int32_t)(value - 0.5f);
 }
 
-static int32_t prvCom103_GetBLDCCurrentPeak_mA( void )
+static int32_t Com103_GetBLDCCurrentPeak_mA( void )
 {
     float iu = fabsf(BLDC_Info.CurrentPhase.U_PhaseCurrent);
     float iv = fabsf(BLDC_Info.CurrentPhase.V_PhaseCurrent);
@@ -66,28 +67,28 @@ static int32_t prvCom103_GetBLDCCurrentPeak_mA( void )
         peak = iw;
     }
 
-    return prvCom103_RoundToS32(peak);
+    return Com103_RoundToS32(peak);
 }
 
-static void prvCom103_FillHandshakeData( uint8_t *pBuf )
+static void Com103_FillHandshakeData( uint8_t *pBuf )
 {
     memset(pBuf, 0, 4U);
     memcpy(pBuf, SoftWareID, 4U);
 }
 
-static int32_t prvCom103_ReadValue( C103Funid_t Funid )
+static int32_t Com103_ReadValue( C103Funid_t Funid )
 {
     switch ( Funid )
     {
 
         case CMid_ReadBLDC_RPM:
-            return prvCom103_RoundToS32(BLDC_Info.RPM);
+            return Com103_RoundToS32(BLDC_Info.RPM);
 
         case CMid_ReadBLDC_Pos:
-            return prvCom103_RoundToS32(BLDC_Info.CurrentAngleDeg);
+            return Com103_RoundToS32(BLDC_Info.CurrentAngleDeg);
 
         case CMid_ReadBLDC_Cur:
-            return prvCom103_GetBLDCCurrentPeak_mA();
+            return Com103_GetBLDCCurrentPeak_mA();
 
         default:
             return 0;
@@ -95,12 +96,16 @@ static int32_t prvCom103_ReadValue( C103Funid_t Funid )
 }
 
 
-static void prvCom103_HandleBLDCWrite( C103Funid_t Funid, int32_t Value )
+static void Com103_HandleBLDCWrite( C103Funid_t Funid, int32_t Value )
 {
     switch ( Funid )
     {
         case CMid_WriteBLDC_RPM:
-            BLDC_SetExpectedRPM((float)Value);
+            FOC_SetSpeedRef((float)Value);
+            if ( BLDC_Info.MotorRunning == 0U )
+            {
+                BLDC_Start();
+            }
             if ( Value <= 0 )
             {
                 BLDC_Stop();
@@ -108,11 +113,19 @@ static void prvCom103_HandleBLDCWrite( C103Funid_t Funid, int32_t Value )
             break;
 
         case CMid_WriteBLDC_Pos:
-            BLDC_SetExpectedAngle((float)Value);
+            FOC_SetPositionRef((float)Value);
+            if ( BLDC_Info.MotorRunning == 0U )
+            {
+                BLDC_Start();
+            }
             break;
 
         case CMid_WriteBLDC_Cur:
-            BLDC_SetExpectedCurrent((float)Value);
+            FOC_SetIqRef((float)Value);
+            if ( BLDC_Info.MotorRunning == 0U )
+            {
+                BLDC_Start();
+            }
             if ( Value <= 0 )
             {
                 BLDC_Stop();
@@ -124,15 +137,14 @@ static void prvCom103_HandleBLDCWrite( C103Funid_t Funid, int32_t Value )
     }
 }
 
-static void prvCom103_HandleWriteCommand( C103Funid_t Funid, int32_t Value )
+static void Com103_HandleWriteCommand( C103Funid_t Funid, int32_t Value )
 {
     switch ( Funid )
     {
-
         case CMid_WriteBLDC_RPM:
         case CMid_WriteBLDC_Pos:
         case CMid_WriteBLDC_Cur:
-            prvCom103_HandleBLDCWrite(Funid, Value);
+            Com103_HandleBLDCWrite(Funid, Value);
             break;
 
         default:
@@ -140,7 +152,7 @@ static void prvCom103_HandleWriteCommand( C103Funid_t Funid, int32_t Value )
     }
 }
 
-static uint8_t prvCom103_IsSupportedFunid( C103Funid_t Funid )
+static uint8_t Com103_IsSupportedFunid( C103Funid_t Funid )
 {
     switch ( Funid )
     {
@@ -235,33 +247,33 @@ void Com103_RxEventHandler( uint8_t *pBuf, uint16_t Size )
         return;
     }
 
-    funid = (C103Funid_t)prvCom103_GetFunid(pBuf);
-    if ( prvCom103_IsSupportedFunid(funid) == 0U )
+    funid = (C103Funid_t)Com103_GetFunid(pBuf);
+    if ( Com103_IsSupportedFunid(funid) == 0U )
     {
         return;
     }
 
-    data = prvCom103_GetS32(pBuf);
+    data = Com103_GetS32(pBuf);
 
     switch ( funid )
     {
         case CMid_Handshake:
-            prvCom103_FillHandshakeData(tx_data);
+            Com103_FillHandshakeData(tx_data);
             Com103_TxProcess(tx_data, funid);
             break;
 
         case CMid_ReadBLDC_RPM:
         case CMid_ReadBLDC_Pos:
         case CMid_ReadBLDC_Cur:
-            prvCom103_PutS32(tx_data, prvCom103_ReadValue(funid));
+            Com103_PutS32(tx_data, Com103_ReadValue(funid));
             Com103_TxProcess(tx_data, funid);
             break;
 
         case CMid_WriteBLDC_RPM:
         case CMid_WriteBLDC_Pos:
         case CMid_WriteBLDC_Cur:
-            prvCom103_HandleWriteCommand(funid, data);
-            prvCom103_PutS32(tx_data, data);
+            Com103_HandleWriteCommand(funid, data);
+            Com103_PutS32(tx_data, data);
             Com103_TxProcess(tx_data, funid);
             break;
 

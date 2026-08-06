@@ -823,11 +823,6 @@
               <FileType>1</FileType>
               <FilePath>..\ASW\BLDC_Control\Hall.c</FilePath>
             </File>
-            <File>
-              <FileName>SixStep.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\ASW\BLDC_Control\SixStep.c</FilePath>
-            </File>
           </Files>
         </Group>
         <Group>

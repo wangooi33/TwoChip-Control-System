@@ -1,19 +1,7 @@
-/* =============================================================================
- *  EC11 旋钮编码器
- *
- *  EC11 内部集成机械编码器，旋转时输出 A/B 两相正交脉冲，
- *  TIM3 编码器模式自动判向并计数。
- *
- *  本模块负责:
- *    1. 周期性读取 TIM3 计数值差值
- *    2. 异常跳变防抖与限幅
- *    3. 将计数折算为机械角度步进
- *    4. 维护绝对目标角度，并下发到 BLDC 位置环
- * ==========================================================================*/
-
 /* Includes ------------------------------------------------------------------*/
 #include "ec11.h"
 #include "BLDC_Control.h"
+#include "FOC.h"
 
 /* global variable -----------------------------------------------------------*/
 int16_t EC11_EncoderLastCnt = 0;
@@ -34,7 +22,7 @@ void EC11_Init( void )
     EC11_CountRemainder = 0;
     EC11_PulseCnt = 0.0f;
     EC11_SpeedDegPerSec = 0.0f;
-    EC11_AbsoluteAngleDeg = BLDC_GetCurrentAngle();
+    EC11_AbsoluteAngleDeg = FOC_GetPositionDeg();
     EC11_TargetAngleDeg = EC11_AbsoluteAngleDeg;
 }
 
@@ -92,6 +80,6 @@ void EC11_Cyclic( void )
 
     /* 维护绝对目标角度, 并激活 BLDC 位置环 */
     EC11_AbsoluteAngleDeg += (float)stepDelta * EC11_DEG_PER_STEP;
-    BLDC_SetExpectedAngle(EC11_AbsoluteAngleDeg);
-    EC11_TargetAngleDeg = BLDC_GetExpectedAngle();
+    FOC_SetPositionRef(EC11_AbsoluteAngleDeg);
+    EC11_TargetAngleDeg = EC11_AbsoluteAngleDeg;
 }

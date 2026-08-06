@@ -1,18 +1,3 @@
-/* =============================================================================
- *  FOC.c — 磁场定向控制 (Field Oriented Control)
- *
- *  架构:
- *    1. SVPWM (扇区判定 + T1/T2 + 比较值)
- *    2. 位置检测 (3 路霍尔 + 扇区内线性插值)
- *    3. 电流反馈复用 w_adc 采样链路 (ADC_to_Current + BLDC_Info 零偏)
- *    4. 三环级联 (电流-速度-位置)
- *    5. 1ms 任务调度
- *
- *  Park 变换物理含义:
- *    d 轴(磁场方向) — 仅励磁, 不做功, 控制 Id = 0
- *    q 轴(切线方向) — 输出力矩, 由外环给定 Iq
- * ==========================================================================*/
-
 /* includes ------------------------------------------------------------------*/
 #include "FOC.h"
 #include "BLDC_Control.h"
@@ -23,24 +8,18 @@
 /* global variable -----------------------------------------------------------*/
 FOC_Info_t FOC_Info;
 
-/* =============================================================================
- *  Park 变换 (αβ -> dq)
- *
- *  d 轴(磁场方向) — 励磁分量, 控制为 0
- *  q 轴(切线方向) — 转矩分量, 输出力矩
- * ==========================================================================*/
-static void Park( float alpha, float beta, float theta,
-                  float *pId, float *pIq )
+/* function implementation ---------------------------------------------------*/
+
+/* Park 变换 (αβ -> dq) */
+static void Park( float alpha, float beta, float theta, float *pId, float *pIq )
 {
     float c = cosf(theta);
     float s = sinf(theta);
     *pId =  alpha * c + beta * s;
     *pIq = -alpha * s + beta * c;
 }
-
 /* 逆 Park 变换 (dq -> αβ) */
-static void InvPark( float vd, float vq, float theta,
-                     float *pValpha, float *pVbeta )
+static void InvPark( float vd, float vq, float theta, float *pValpha, float *pVbeta )
 {
     float c = cosf(theta);
     float s = sinf(theta);
@@ -48,13 +27,10 @@ static void InvPark( float vd, float vq, float theta,
     *pVbeta  = vd * s + vq * c;
 }
 
-/* =============================================================================
- *  SVPWM — 扇区判定 + T1/T2 + 比较值
- * ==========================================================================*/
-
-/* 判定扇区: 利用三个参考值的符号编码 */
+/* SVPWM — 扇区判定 + T1/T2 + 比较值 */
 static uint8_t CalcSector( float valpha, float vbeta )
 {
+	/* 判定扇区: 利用三个参考值的符号编码 */
     float vr1 = vbeta;
     float vr2 = (sqrtf(3.0f) * 0.5f) * valpha - 0.5f * vbeta;
     float vr3 = -(sqrtf(3.0f) * 0.5f) * valpha - 0.5f * vbeta;
@@ -70,8 +46,7 @@ static uint8_t CalcSector( float valpha, float vbeta )
 }
 
 /* 计算相邻两个有效矢量的作用时间 */
-static void CalcT1T2( float va, float vb, uint8_t sector,
-                      float ts, float vdc, float *pT1, float *pT2 )
+static void CalcT1T2( float va, float vb, uint8_t sector, float ts, float vdc, float *pT1, float *pT2 )
 {
     float x = sqrtf(3.0f) * vb * ts / vdc;
     float y = (sqrtf(3.0f) * vb + 3.0f * va) * ts / (2.0f * vdc);
@@ -153,9 +128,7 @@ static void SVPWM( float valpha, float vbeta, uint32_t *duty )
     duty[2] = tc;
 }
 
-/* =============================================================================
- *  位置检测 — 3 路霍尔 + 扇区内线性插值
- * ==========================================================================*/
+/* 位置检测 — 3 路霍尔 + 扇区内线性插值 */
 static void HallPositionUpdate( void )
 {
     uint32_t nowMs = SystemRunTime_1ms;
@@ -194,8 +167,7 @@ static void HallPositionUpdate( void )
     {
         float periodS = periodMs * 0.001f;
         FOC_Info.OmegaElec_RadPs = 1.04719755f / periodS;   /* 60° = PI/3 rad */
-        FOC_Info.SpeedRPM = FOC_Info.OmegaElec_RadPs * 60.0f
-                          / (6.2831853f * (float)BLDC_POLE_PAIRS);
+        FOC_Info.SpeedRPM = FOC_Info.OmegaElec_RadPs * 60.0f / (6.2831853f * (float)BLDC_POLE_PAIRS);
     }
     else
     {
@@ -204,81 +176,16 @@ static void HallPositionUpdate( void )
     }
 }
 
-/* =============================================================================
- *  三相电流读取 — 复用 w_adc 的 ADC_to_Current 与 BLDC_Info 零偏校准
- *  返回 mA 并做一阶低通滤波
- * ==========================================================================*/
+/* 三相电流读取 */
 static void UpdateFOCCurrents( void )
 {
-    float rawU = ADC_to_Current(gADC3CaptureBuffer[BLDC_U_Current],
-                                BLDC_Info.CurrZeroOffsetV.U_PhaseSetV) * 1000.0f;
-    float rawV = ADC_to_Current(gADC3CaptureBuffer[BLDC_V_Current],
-                                BLDC_Info.CurrZeroOffsetV.V_PhaseSetV) * 1000.0f;
-    float rawW = ADC_to_Current(gADC3CaptureBuffer[BLDC_W_Current],
-                                BLDC_Info.CurrZeroOffsetV.W_PhaseSetV) * 1000.0f;
+    float rawU = ADC_to_Current(gADC3CaptureBuffer[BLDC_U_Current],BLDC_Info.CurrZeroOffsetV.U_PhaseSetV) * 1000.0f;
+    float rawV = ADC_to_Current(gADC3CaptureBuffer[BLDC_V_Current],BLDC_Info.CurrZeroOffsetV.V_PhaseSetV) * 1000.0f;
+    float rawW = ADC_to_Current(gADC3CaptureBuffer[BLDC_W_Current],BLDC_Info.CurrZeroOffsetV.W_PhaseSetV) * 1000.0f;
 
     FOC_Info.Iu_mA = 0.8f * FOC_Info.Iu_mA + 0.2f * rawU;
     FOC_Info.Iv_mA = 0.8f * FOC_Info.Iv_mA + 0.2f * rawV;
     FOC_Info.Iw_mA = 0.8f * FOC_Info.Iw_mA + 0.2f * rawW;
-}
-
-/* =============================================================================
- *  TIM8 FOC 模式重配置
- * ==========================================================================*/
-static void TimerFOCConfig( void )
-{
-    HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_1);
-    HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_2);
-    HAL_TIM_PWM_Stop(&htim8, TIM_CHANNEL_3);
-
-    /* PH13/14/15: GPIO -> TIM8_CH1N/CH2N/CH3N (AF3) */
-    GPIO_InitTypeDef gpio = {0};
-    gpio.Pin = GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
-    gpio.Mode = GPIO_MODE_AF_PP;
-    gpio.Pull = GPIO_NOPULL;
-    gpio.Speed = GPIO_SPEED_FREQ_HIGH;
-    gpio.Alternate = GPIO_AF3_TIM8;
-    HAL_GPIO_Init(GPIOH, &gpio);
-
-    HAL_TIM_PWM_DeInit(&htim8);
-
-    htim8.Instance = TIM8;
-    htim8.Init.Prescaler = 1;
-    htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
-    htim8.Init.Period = (uint32_t)FOC_PWM_PERIOD;
-    htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    htim8.Init.RepetitionCounter = 0;
-    htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
-    HAL_TIM_PWM_Init(&htim8);
-
-    TIM_MasterConfigTypeDef masterCfg = {0};
-    masterCfg.MasterOutputTrigger = TIM_TRGO_UPDATE;
-    masterCfg.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-    HAL_TIMEx_MasterConfigSynchronization(&htim8, &masterCfg);
-
-    TIM_OC_InitTypeDef ocCfg = {0};
-    ocCfg.OCMode = TIM_OCMODE_PWM1;
-    ocCfg.Pulse = 0;
-    ocCfg.OCPolarity = TIM_OCPOLARITY_HIGH;
-    ocCfg.OCNPolarity = TIM_OCNPOLARITY_HIGH;
-    ocCfg.OCFastMode = TIM_OCFAST_DISABLE;
-    ocCfg.OCIdleState = TIM_OCIDLESTATE_RESET;
-    ocCfg.OCNIdleState = TIM_OCNIDLESTATE_RESET;
-    HAL_TIM_PWM_ConfigChannel(&htim8, &ocCfg, TIM_CHANNEL_1);
-    HAL_TIM_PWM_ConfigChannel(&htim8, &ocCfg, TIM_CHANNEL_2);
-    HAL_TIM_PWM_ConfigChannel(&htim8, &ocCfg, TIM_CHANNEL_3);
-
-    TIM_BreakDeadTimeConfigTypeDef bdtCfg = {0};
-    bdtCfg.OffStateRunMode = TIM_OSSR_ENABLE;
-    bdtCfg.OffStateIDLEMode = TIM_OSSI_ENABLE;
-    bdtCfg.LockLevel = TIM_LOCKLEVEL_OFF;
-    bdtCfg.DeadTime = (uint8_t)FOC_DEADTIME_CYCLES;
-    bdtCfg.BreakState = TIM_BREAK_DISABLE;
-    bdtCfg.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
-    bdtCfg.AutomaticOutput = TIM_AUTOMATICOUTPUT_ENABLE;
-    HAL_TIMEx_ConfigBreakDeadTime(&htim8, &bdtCfg);
-
-    HAL_TIM_MspPostInit(&htim8);
 }
 
 static void PWMStart( void )
@@ -305,49 +212,29 @@ static void PWMStop( void )
     HAL_TIMEx_PWMN_Stop(&htim8, TIM_CHANNEL_3);
 }
 
-/* =============================================================================
- *  三环级联
- * ==========================================================================*/
-
 /* 位置环: 输出转速目标 (10Hz / 100ms) */
 static void PositionLoop( void )
 {
-    float rpmRef = PID_Update(&FOC_Info.PID_Position,
-                              FOC_Info.PositionRef_Deg,
-                              FOC_Info.PositionDeg);
-    FOC_Info.SpeedRef_RPM = Clampf(rpmRef,
-                                   -FOC_POSITION_LIMIT_RPM,
-                                   FOC_POSITION_LIMIT_RPM);
+    float rpmRef = PID_Update(&FOC_Info.PID_Position,FOC_Info.PositionRef_Deg,FOC_Info.PositionDeg);
+    FOC_Info.SpeedRef_RPM = Clampf(rpmRef,-FOC_POSITION_LIMIT_RPM,FOC_POSITION_LIMIT_RPM);
 }
 
 /* 速度环: 输出 q 轴电流目标 (100Hz / 10ms) */
 static void SpeedLoop( void )
 {
-    float iqRef = PID_Update(&FOC_Info.PID_Speed,
-                             FOC_Info.SpeedRef_RPM,
-                             FOC_Info.SpeedRPM);
-    FOC_Info.Iq_Ref_mA = Clampf(iqRef,
-                                -FOC_SPEED_LIMIT_mA,
-                                FOC_SPEED_LIMIT_mA);
+    float iqRef = PID_Update(&FOC_Info.PID_Speed,FOC_Info.SpeedRef_RPM,FOC_Info.SpeedRPM);
+    FOC_Info.Iq_Ref_mA = Clampf(iqRef,-FOC_SPEED_LIMIT_mA,FOC_SPEED_LIMIT_mA);
     FOC_Info.Id_Ref_mA = 0.0f;   /* Id = 0 控制 */
 }
 
 /* 电流环: 输出 dq 电压 (1kHz / 1ms) */
 static void CurrentLoop( void )
 {
-    float vd = PID_Update(&FOC_Info.PID_Id,
-                          FOC_Info.Id_Ref_mA,
-                          FOC_Info.Id_mA);
-    float vq = PID_Update(&FOC_Info.PID_Iq,
-                          FOC_Info.Iq_Ref_mA,
-                          FOC_Info.Iq_mA);
+    float vd = PID_Update(&FOC_Info.PID_Id,FOC_Info.Id_Ref_mA,FOC_Info.Id_mA);
+    float vq = PID_Update(&FOC_Info.PID_Iq,FOC_Info.Iq_Ref_mA,FOC_Info.Iq_mA);
     FOC_Info.Vd = vd;
     FOC_Info.Vq = vq;
 }
-
-/* =============================================================================
- *  公共函数
- * ==========================================================================*/
 
 void FOC_Init( void )
 {
@@ -377,7 +264,7 @@ void FOC_Init( void )
     FOC_Info.SpeedRef_RPM = 0.0f;
     FOC_Info.PositionRef_Deg = 0.0f;
     FOC_Info.LoopCounter = 0U;
-    FOC_Info.LoopMode = FOC_LOOP_CURRENT;
+    FOC_Info.LoopMode = FOC_LOOP_SPEED;
     FOC_Info.Calibrated = 0U;
     FOC_Info.Enabled = 0U;
 
@@ -410,7 +297,6 @@ void FOC_Enable( void )
     }
 
     Hall_Start();       /* FOC 位置反馈依赖霍尔 */
-    TimerFOCConfig();
     PWMStart();
 
     FOC_Info.Enabled = 1U;
@@ -428,9 +314,7 @@ void FOC_Disable( void )
     PID_Reset(&FOC_Info.PID_Position);
 }
 
-/* =============================================================================
- *  FOC_Update() — 1kHz 控制主循环
- * ==========================================================================*/
+/* FOC_Update() — 1kHz 控制主循环 */
 void FOC_Update( void )
 {
     if ( !FOC_Info.Enabled )
@@ -445,6 +329,7 @@ void FOC_Update( void )
 
     /* 2. Hall 位置插值 */
     HallPositionUpdate();
+    BLDC_Info.RPM = FOC_Info.SpeedRPM;   /* 同步到外部可读的转速 */
 
     float ia = FOC_Info.Iu_mA;
     float ib = FOC_Info.Iv_mA;
@@ -454,19 +339,16 @@ void FOC_Update( void )
     Clarke(ia, ib, &FOC_Info.Ialpha_mA, &FOC_Info.Ibeta_mA);
 
     /* 4. Park: αβ -> dq */
-    Park(FOC_Info.Ialpha_mA, FOC_Info.Ibeta_mA, theta,
-         &FOC_Info.Id_mA, &FOC_Info.Iq_mA);
+    Park(FOC_Info.Ialpha_mA, FOC_Info.Ibeta_mA, theta,&FOC_Info.Id_mA, &FOC_Info.Iq_mA);
 
     /* 5. 外环: 位置环(100ms) -> 速度环(10ms) */
-    if ( FOC_Info.LoopMode == FOC_LOOP_POSITION &&
-         (FOC_Info.LoopCounter % FOC_POSITION_LOOP_MS) == 0U )
+    if (FOC_Info.LoopMode == FOC_LOOP_POSITION && (FOC_Info.LoopCounter % FOC_POSITION_LOOP_MS) == 0U)
     {
         PositionLoop();
     }
 
-    if ( (FOC_Info.LoopMode == FOC_LOOP_SPEED ||
-          FOC_Info.LoopMode == FOC_LOOP_POSITION) &&
-         (FOC_Info.LoopCounter % FOC_SPEED_LOOP_MS) == 0U )
+    if ((FOC_Info.LoopMode == FOC_LOOP_SPEED || FOC_Info.LoopMode == FOC_LOOP_POSITION) 
+		&& (FOC_Info.LoopCounter % FOC_SPEED_LOOP_MS) == 0U)
     {
         SpeedLoop();
     }
@@ -483,15 +365,14 @@ void FOC_Update( void )
 	//把电流环输出归一化到 [-1, 1]
     float vdNorm = FOC_Info.Vd / FOC_CURRENT_LIMIT_mA * FOC_VOLTAGE_LIMIT;
     float vqNorm = FOC_Info.Vq / FOC_CURRENT_LIMIT_mA * FOC_VOLTAGE_LIMIT;
-	//换算成实际相电压
+	//换算成实际电压
     vdNorm = Clampf(vdNorm, -1.0f, 1.0f);
     vqNorm = Clampf(vqNorm, -1.0f, 1.0f);
 	//把归一化值映射到真实电压.乘 vdc * 0.5 是因为在中心点电压参考系下,相电压最大幅值约等于母线电压的一半
     float vdReal = vdNorm * vdc * 0.5f;
     float vqReal = vqNorm * vdc * 0.5f;
 
-    InvPark(vdReal, vqReal, theta,
-            &FOC_Info.Valpha, &FOC_Info.Vbeta);
+    InvPark(vdReal, vqReal, theta,&FOC_Info.Valpha, &FOC_Info.Vbeta);
 
     /* 8. SVPWM */
     uint32_t duty[3];
@@ -503,10 +384,7 @@ void FOC_Update( void )
     TIM8->CCR3 = duty[2];
 }
 
-/* =============================================================================
- *  目标给定 API
- * ==========================================================================*/
-
+/* 目标给定 API */
 void FOC_SetIqRef( float iq_mA )
 {
     FOC_Info.Iq_Ref_mA = Clampf(iq_mA, -FOC_CURRENT_LIMIT_mA, FOC_CURRENT_LIMIT_mA);

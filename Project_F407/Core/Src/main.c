@@ -40,7 +40,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S020";
+const char SoftWareID[] = "S021";
 
 /* USER CODE END PTD */
 
@@ -100,7 +100,6 @@ void Task_5ms()
 	ADC_Cyclic();
 
 	EC11_Cyclic();
-	BLDC_Cyclic();
 }
 void Task_10ms()
 {
@@ -241,20 +240,14 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
   EC11_Init();
   HAL_ADC_Start_DMA(&hadc3,(uint32_t *)gADC3CaptureBuffer,ADC3_CAPTURE_BUF_MAXSIZE);
-  BLDC_Disable();
-  BLDC_PIDInit(&BLDC_Info);
-  BLDC_ResetControlState(&BLDC_Info);
-  BLDC_PositionReset(&BLDC_Info);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
   HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
-  HAL_TIMEx_ConfigCommutationEvent(&htim8,TIM_TS_ITR3,TIM_COMMUTATION_SOFTWARE);
   Motor_CurrentOffsetCalibrate(&BLDC_Info);
   Com103_Init();
   FOC_Init();
-  BLDC_SetFOCMode();          /* 默认 FOC 模式, 六步换相不再使用 */
   FOC_SetSpeedRef(0.0f);      /* 默认速度目标 0, 使能但不转 */
-  BLDC_Start();               /* 启动 FOC: Hall + TIM8 + PWM */
+  BLDC_Start();
   /* USER CODE END 2 */
 
   /* Infinite loop */

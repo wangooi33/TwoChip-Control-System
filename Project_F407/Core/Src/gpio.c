@@ -38,6 +38,8 @@
         * Output
         * EVENT_OUT
         * EXTI
+     PA8   ------> S_TIM1_CH1
+     PA9   ------> S_TIM1_CH2
 */
 void MX_GPIO_Init(void)
 {
@@ -62,9 +64,6 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(BEEP_GPIO_Port, BEEP_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOH, BLDC_CH1N_Pin|BLDC_CH2N_Pin|BLDC_CH3N_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
@@ -119,12 +118,14 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(EC11_SW_GPIO_Port, &GPIO_InitStruct);
-  /*Configure GPIO pins : BLDC_CH1N_Pin BLDC_CH2N_Pin BLDC_CH3N_Pin */
-  GPIO_InitStruct.Pin = BLDC_CH1N_Pin|BLDC_CH2N_Pin|BLDC_CH3N_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+
+  /*Configure GPIO pins : PA8 PA9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOH, &GPIO_InitStruct);
+  GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED1_Pin */
   GPIO_InitStruct.Pin = LED1_Pin;

@@ -76,12 +76,6 @@ void Error_Handler(void);
 #define BEEP_GPIO_Port GPIOG
 #define EC11_SW_Pin GPIO_PIN_8
 #define EC11_SW_GPIO_Port GPIOG
-#define BLDC_CH1N_Pin GPIO_PIN_13
-#define BLDC_CH1N_GPIO_Port GPIOH
-#define BLDC_CH2N_Pin GPIO_PIN_14
-#define BLDC_CH2N_GPIO_Port GPIOH
-#define BLDC_CH3N_Pin GPIO_PIN_15
-#define BLDC_CH3N_GPIO_Port GPIOH
 #define LED1_Pin GPIO_PIN_15
 #define LED1_GPIO_Port GPIOA
 #define LED3_Pin GPIO_PIN_15
