@@ -496,14 +496,6 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 		BLDC_Info.MotorStalling = 0;
 	}
 }
-void HAL_TIM_OC_DelayElapsedCallback(TIM_HandleTypeDef *htim)
-{
-
-}
-void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim)
-{
-
-}
 
 /* USER CODE END 1 */
 

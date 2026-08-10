@@ -238,7 +238,7 @@ static void CurrentLoop( void )
 }
 
 /* DAC速度环调试:CH1(PA4) = SpeedRef_RPM, CH2(PA5) = SpeedRPM
- 映射: ±3000 RPM -> 0~3.3V, 0 RPM = 1.65V */
+ 映射: ±3000 RPM -> 0~3.3V, 0 RPM = 3.3 / 2 = 1.65V */
 static void DAC_SpeedDebug( void )
 {
 	/* 转速换算成电压 */

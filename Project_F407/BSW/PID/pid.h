@@ -5,19 +5,7 @@
 extern "C" {
 #endif
 
-/* 浮点数钳位工具 */
-static inline float Clampf( float value, float min, float max )
-{
-    if ( value < min )
-    {
-        return min;
-    }
-    if ( value > max )
-    {
-        return max;
-    }
-    return value;
-}
+/* types ---------------------------------------------------------------------*/
 
 /* PID 控制对象 */
 typedef struct
@@ -35,11 +23,25 @@ typedef struct
     float Dt;           /* 控制周期 [s] */
 } PID_t;
 
-/* 初始化 PID 参数并清零状态 */
+/* functions prototypes ------------------------------------------------------*/
+
+/* 浮点数钳位工具 */
+static inline float Clampf( float value, float min, float max )
+{
+    if ( value < min )
+    {
+        return min;
+    }
+    if ( value > max )
+    {
+        return max;
+    }
+    return value;
+}
+
 void PID_Init( PID_t *pPID, float Kp, float Ki, float Kd,
                float limit, float intLimit, float Kb, float dt );
 
-/* 复位积分和历史状态, 保留参数 */
 void PID_Reset( PID_t *pPID );
 
 /* 执行一次 PID 运算, 返回限幅后的输出 */

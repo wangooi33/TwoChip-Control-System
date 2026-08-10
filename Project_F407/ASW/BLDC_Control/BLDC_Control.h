@@ -9,11 +9,10 @@ extern "C" {
 #include "main.h"
 #include "tim.h"
 
-
-/* 电机参数 */
+/* macro ---------------------------------------------------------------------*/
 #define BLDC_POLE_PAIRS                 (2U)        /* 电机极对数 */
 
-/* 驱动器使能控制 */
+/* shutdown */
 #define BLDC_SD_ENABLE()                HAL_GPIO_WritePin(BLDC_SD_GPIO_Port, BLDC_SD_Pin, GPIO_PIN_SET)
 #define BLDC_SD_DISABLE()               HAL_GPIO_WritePin(BLDC_SD_GPIO_Port, BLDC_SD_Pin, GPIO_PIN_RESET)
 
@@ -76,10 +75,10 @@ typedef struct
 extern BLDC_Info_t BLDC_Info;
 
 /* functions prototypes ------------------------------------------------------*/
-void BLDC_Start( void );        /* 使能驱动并启动 FOC */
-void BLDC_Stop( void );         /* 停止 FOC 并关闭驱动 */
-void BLDC_TripStop( void );     /* 故障停机 */
-void BLDC_Disable( void );      /* 关闭功率级 */
+void BLDC_Start( void );
+void BLDC_Stop( void );
+void BLDC_TripStop( void );
+void BLDC_Disable( void );
 
 #ifdef __cplusplus
 }

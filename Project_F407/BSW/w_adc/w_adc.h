@@ -6,39 +6,26 @@
 #include "adc.h"
 #include "BLDC_Control.h"
 
-/* =============================================================================
- *  母线电压采样链路:
- *    POWER --[R_upper/R_lower 分压]--> 分压点 --[电压跟随器]--> VBUS --> ADC
- *    反算: POWER = VBUS * DIV_RATIO
- * ==========================================================================*/
+/* macro ---------------------------------------------------------------------*/
+
+/* --电压采集-- */
 #define ADC_R_UPPER_K       (100.0f)    /* 上分压电阻 [kOhm] */
 #define ADC_R_LOWER_K       (10.0f)     /* 下分压电阻 [kOhm] */
 #define ADC_DIV_RATIO       ((ADC_R_UPPER_K + ADC_R_LOWER_K) / ADC_R_LOWER_K)
-
 /* ADC 参数 */
 #define ADC_REF_V           (3.3f)      /* ADC 参考电压 [V] */
 #define ADC_BITS            (4096.0f)   /* 12-bit = 4096 级 */
 #define ADC_V_PER_LSB       (ADC_REF_V / ADC_BITS)
-
 /* 母线保护阈值 [V] */
 #define ADC_VBUS_OV_THRESH  (30.0f)     /* 过压 */
 #define ADC_VBUS_UV_THRESH  (8.0f)      /* 欠压 */
 
-/* =============================================================================
- *  电流采样链路:
- *    采样电阻 -> 差分放大 -> 抬升 V_OFFSET -> ADC
- *    反算: I = (V_adc - V_OFFSET) / (AMP_GAIN * R_SHUNT)
- * ==========================================================================*/
+/* --电流采集-- */
 #define ADC_R_SHUNT         (0.005f)    /* 采样电阻 [Ohm] */
 #define ADC_AMP_GAIN        (20.0f)     /* 差分放大倍数 */
 #define ADC_V_OFFSET        (1.65f)     /* 抬升电压 [V] */
 
-/* =============================================================================
- *  温度检测链路:
- *    VCC --[NTC]--+--[R_FIXED]-- GND
- *                |
- *                +-- 电压跟随 --> ADC
- * ==========================================================================*/
+/* --温度采集--*/
 #define ADC_TEMP_R_FIXED    (4700.0f)   /* 固定电阻 [Ohm] */
 #define ADC_TEMP_R0         (10000.0f)  /* NTC 25C 标称阻值 [Ohm] */
 #define ADC_TEMP_BETA       (3950.0f)   /* NTC B 常数 */
@@ -55,7 +42,6 @@ void ReadBusVoltage( void );
 void ReadTemperature( void );
 uint8_t CheckBusFault( void );
 uint8_t CheckTempFault( void );
-float GetBusVoltage( void );
 void Clarke( float iu, float iv, float *pAlpha, float *pBeta );
 
 void Motor_CurrentOffsetCalibrate( BLDC_Info_t *pBLDC );
