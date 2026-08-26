@@ -16,9 +16,8 @@ static int8_t Hall_GetStepDelta( uint8_t previousHall, uint8_t currentHall )
     static const uint8_t hallForwardSeq[6] = {1U, 5U, 4U, 6U, 2U, 3U};
     int8_t previousIndex = -1;
     int8_t currentIndex = -1;
-    uint8_t i;
 
-    for ( i = 0U; i < 6U; i++ )
+    for ( uint8_t i = 0U; i < 6U; i++ )
     {
         if ( hallForwardSeq[i] == previousHall )
         {

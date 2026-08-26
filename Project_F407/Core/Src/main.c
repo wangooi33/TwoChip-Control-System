@@ -20,7 +20,6 @@
 #include "main.h"
 #include "adc.h"
 #include "crc.h"
-#include "dac.h"
 #include "dma.h"
 #include "tim.h"
 #include "usart.h"
@@ -28,41 +27,22 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "key.h"
-#include "beep.h"
-#include "BLDC_Control.h"
-#include "ec11.h"
-#include "timers.h"
-#include "w_adc.h"
-#include "communication.h"
-#include "FOC.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "S022";
+const char SoftWareID[] = "T001";
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TASK_PERIOD_1MS       1
-#define TASK_PERIOD_2MS       2
-#define TASK_PERIOD_5MS       5
-#define TASK_PERIOD_10MS      10
-
-#define TASK_PERIOD_20MS      20
-#define TASK_PERIOD_50MS      50
-#define TASK_PERIOD_100MS     100
-#define TASK_PERIOD_500MS     500
-#define TASK_PERIOD_1000MS    1000
 
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
 
 /* USER CODE END PM */
 
@@ -80,121 +60,6 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-volatile uint32_t SystemRunTime_1ms = 0;
-
-uint32_t GetTick_1ms(void)
-{
-  return SystemRunTime_1ms;
-}
-
-void Task_1ms()
-{
-	TimersManagerTask();
-	FOC_Update();
-}
-void Task_2ms()
-{
-
-}
-void Task_5ms()
-{
-	ADC_Cyclic();
-
-	EC11_Cyclic();
-}
-void Task_10ms()
-{
-
-}
-void Task_20ms()
-{
-
-}
-void Task_50ms()
-{
-	KeyTask_Cyclic();
-}
-
-void Task_100ms()
-{
-	LED1_TOGGLE;
-}
-void Task_500ms()
-{
-	LED1_TOGGLE;
-}
-void Task_1000ms()
-{
-	LED4_TOGGLE;
-}
-void TaskSchedule()
-{
-    uint32_t now = GetTick_1ms();
-
-    static uint32_t t1 = 0;
-    static uint32_t t2 = 0;
-    static uint32_t t5 = 0;
-    static uint32_t t10 = 0;
-    static uint32_t t20 = 0;
-    static uint32_t t50 = 0;
-    static uint32_t t100 = 0;
-    static uint32_t t500 = 0;
-    static uint32_t t1000 = 0;
-
-    if ((int32_t)(now - t1) >= TASK_PERIOD_1MS)
-    {
-        t1 += TASK_PERIOD_1MS;
-        Task_1ms();
-    }
-
-    if ((int32_t)(now - t2) >= TASK_PERIOD_2MS)
-    {
-        t2 += TASK_PERIOD_2MS;
-        Task_2ms();
-    }
-
-    if ((int32_t)(now - t5) >= TASK_PERIOD_5MS)
-    {
-        t5 += TASK_PERIOD_5MS;
-        Task_5ms();
-    }
-
-    if ((int32_t)(now - t10) >= TASK_PERIOD_10MS)
-    {
-        t10 += TASK_PERIOD_10MS;
-        Task_10ms();
-    }
-
-    if ((int32_t)(now - t20) >= TASK_PERIOD_20MS)
-    {
-        t20 += TASK_PERIOD_20MS;
-        Task_20ms();
-    }
-
-    if ((int32_t)(now - t50) >= TASK_PERIOD_50MS)
-    {
-        t50 += TASK_PERIOD_50MS;
-        Task_50ms();
-    }
-
-    if ((int32_t)(now - t100) >= TASK_PERIOD_100MS)
-    {
-        t100 += TASK_PERIOD_100MS;
-        Task_100ms();
-    }
-
-    if ((int32_t)(now - t500) >= TASK_PERIOD_500MS)
-    {
-        t500 += TASK_PERIOD_500MS;
-        Task_500ms();
-    }
-
-    if ((int32_t)(now - t1000) >= TASK_PERIOD_1000MS)
-    {
-        t1000 += TASK_PERIOD_1000MS;
-        Task_1000ms();
-    }
-}
 
 /* USER CODE END 0 */
 
@@ -233,23 +98,14 @@ int main(void)
   MX_TIM7_Init();
   MX_TIM3_Init();
   MX_TIM5_Init();
-  MX_TIM8_Init();
-  MX_USART2_UART_Init();
   MX_ADC3_Init();
-  MX_DAC_Init();
+  MX_ADC1_Init();
+  MX_ADC2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim7);
-  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
-  EC11_Init();
-  HAL_ADC_Start_DMA(&hadc3,(uint32_t *)gADC3CaptureBuffer,ADC3_CAPTURE_BUF_MAXSIZE);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_3);
-  Motor_CurrentOffsetCalibrate(&BLDC_Info);
-  Com103_Init();
-  FOC_Init();
-  FOC_SetSpeedRef(0.0f);      /* 默认速度目标 0, 使能但不转 */
-  BLDC_Start();
+  BLDC_Enable();
+  ADC_Enable();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -257,6 +113,7 @@ int main(void)
   while (1)
   {
     TaskSchedule();
+	printf("%f,%f,%f,%f,%f,%f\n",Valpha,Vbeta,Tcm1,Tcm2,Tcm3);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

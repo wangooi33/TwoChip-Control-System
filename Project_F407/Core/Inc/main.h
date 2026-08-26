@@ -31,6 +31,10 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "task.h"
+#include "timers.h"
+#include "w_adc.h"
+#include "bldc_control.h"
 
 /* USER CODE END Includes */
 
@@ -41,7 +45,6 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-extern volatile uint32_t SystemRunTime_1ms;
 extern const char SoftWareID[];
 /* USER CODE END EC */
 
@@ -60,26 +63,20 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define LED2_Pin GPIO_PIN_2
 #define LED2_GPIO_Port GPIOE
-#define BLDC_SD_Pin GPIO_PIN_6
-#define BLDC_SD_GPIO_Port GPIOE
-#define KEY3_Pin GPIO_PIN_13
-#define KEY3_GPIO_Port GPIOC
-#define KEY1_Pin GPIO_PIN_0
-#define KEY1_GPIO_Port GPIOA
-#define KEY2_Pin GPIO_PIN_2
-#define KEY2_GPIO_Port GPIOG
-#define KEY4_Pin GPIO_PIN_3
-#define KEY4_GPIO_Port GPIOG
-#define KEY5_Pin GPIO_PIN_4
-#define KEY5_GPIO_Port GPIOG
-#define BEEP_Pin GPIO_PIN_7
-#define BEEP_GPIO_Port GPIOG
-#define EC11_SW_Pin GPIO_PIN_8
-#define EC11_SW_GPIO_Port GPIOG
+#define IU_Pin GPIO_PIN_3
+#define IU_GPIO_Port GPIOA
+#define IV_Pin GPIO_PIN_4
+#define IV_GPIO_Port GPIOA
+#define IW_Pin GPIO_PIN_6
+#define IW_GPIO_Port GPIOA
+#define VBUS_Pin GPIO_PIN_0
+#define VBUS_GPIO_Port GPIOB
+#define TEMP_Pin GPIO_PIN_1
+#define TEMP_GPIO_Port GPIOB
 #define LED1_Pin GPIO_PIN_15
 #define LED1_GPIO_Port GPIOA
-#define LED3_Pin GPIO_PIN_15
-#define LED3_GPIO_Port GPIOG
+#define SD_Pin GPIO_PIN_12
+#define SD_GPIO_Port GPIOG
 #define LED4_Pin GPIO_PIN_8
 #define LED4_GPIO_Port GPIOB
 

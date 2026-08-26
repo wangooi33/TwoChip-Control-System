@@ -7,14 +7,19 @@ extern "C" {
 
 /* includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "foc.h"
 #include "tim.h"
 
 /* macro ---------------------------------------------------------------------*/
-#define BLDC_POLE_PAIRS                 (2U)        /* 电机极对数 */
+
+/* 定时器参数 */
+#define PWM_PERIOD							(8399U)
+#define TIM_CLK_HZ							(168000000.0f)	/* 中心对齐计数频率   */
+#define BLDC_POLE_PAIRS						(2U)			/* 电机极对数 */
 
 /* shutdown */
-#define BLDC_SD_ENABLE()                HAL_GPIO_WritePin(BLDC_SD_GPIO_Port, BLDC_SD_Pin, GPIO_PIN_SET)
-#define BLDC_SD_DISABLE()               HAL_GPIO_WritePin(BLDC_SD_GPIO_Port, BLDC_SD_Pin, GPIO_PIN_RESET)
+#define BLDC_SD_ENABLE()                HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_SET)
+#define BLDC_SD_DISABLE()               HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_RESET)
 
 /* enum ----------------------------------------------------------------------*/
 typedef enum
@@ -23,30 +28,7 @@ typedef enum
     MOTOR_FWD,
 } MotorDir_t;
 
-typedef enum
-{
-    BLDC_U_Current,
-    BLDC_V_Current,
-    BLDC_W_Current,
-    BLDC_PowerVoltage,
-    BLDC_MotorTemperature,
-} ADC3_ChannelIndex_t;
-
 /* types ---------------------------------------------------------------------*/
-typedef struct
-{
-    float U_PhaseCurrent;
-    float V_PhaseCurrent;
-    float W_PhaseCurrent;
-} CurrentPhase_t;
-
-typedef struct
-{
-    float U_PhaseSetV;
-    float V_PhaseSetV;
-    float W_PhaseSetV;
-} PhaseSetV_t;
-
 typedef struct
 {
     float U_CurrFilt;
@@ -54,18 +36,17 @@ typedef struct
     float W_CurrFilt;
 } PhaseCurrFilt_t;
 
-/* 全局电机状态 */
 typedef struct
 {
-    float PowerVoltage;          /* 母线电压 [V], w_adc 分压反算 */
-    CurrentPhase_t CurrentPhase; /* 三相电流 [mA], 采样/滤波后 */
-    PhaseSetV_t CurrZeroOffsetV; /* 三相电流零点偏置 [V], 上电校准 */
+	float ZeroOffset[3];		/* 三相零电流时的电压偏置(ADC原始值) */
+	float Power;				/* 母线电压 */
+	float PhaseCurrent[3];		/* 三相电流, 采样/滤波后 */
+	float MotorTemperature;		/* 电机温度 */
+	
     PhaseCurrFilt_t CurrFilt;    /* 三相电流一阶低通滤波值 [mA] */
-    float MotorTemperature;      /* 电机温度 [°C], NTC 换算 */
-
-    float RPM;                   /* 当前转速 [rpm], FOC 速度反馈同步 */
+    float RPM;
     float CurrentAngleDeg;       /* 当前机械角度 [°], Hall 累计 */
-    MotorDir_t Direction;        /* 电机方向, Hall 跳变方向兜底 */
+    MotorDir_t Direction;
     int32_t HallStepCount;       /* Hall 扇区步进计数, 位置累计 */
     uint8_t MotorRunning;        /* 电机运行标志: 1=运行 */
     uint8_t MotorStalling;       /* 堵转/故障标志: 1=故障停机 */
@@ -73,12 +54,12 @@ typedef struct
 
 /* global variable -----------------------------------------------------------*/
 extern BLDC_Info_t BLDC_Info;
-
+extern float Valpha,Vbeta,Tcm1,Tcm2,Tcm3;
 /* functions prototypes ------------------------------------------------------*/
-void BLDC_Start( void );
-void BLDC_Stop( void );
-void BLDC_TripStop( void );
-void BLDC_Disable( void );
+void BLDC_Enable(void);
+void BLDC_Disable(void);
+void BLDC_Run(void);
+
 
 #ifdef __cplusplus
 }
