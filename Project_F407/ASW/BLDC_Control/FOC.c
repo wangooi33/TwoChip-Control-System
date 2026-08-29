@@ -1,30 +1,39 @@
 /* includes ------------------------------------------------------------------*/
 #include "foc.h"
-#include "hall.h"
-#include "w_adc.h"
+#include "pid.h"
+#include <math.h>
 
 /* global variable -----------------------------------------------------------*/
+FOC_Info_t FOC_Info;
 
 /* function implementation ---------------------------------------------------*/
 
+/* Clark变换   (abc -> αβ) */
+void Clark(float Ia, float Ib, float *pIalpha, float *pIbeta)
+{
+	*pIalpha = Ia;
+	*pIbeta  = (Ia + 2.0f * Ib) * 0.577350269f;
+}
 /* Park变换 (αβ -> dq) */
-void Park(float alpha, float beta, float theta, float *pId, float *pIq)
+void Park(float Ialpha, float Ibeta, float theta, float *pId, float *pIq)
 {
 	float c = cosf(theta);
 	float s = sinf(theta);
-	*pId =  alpha * c + beta * s;
-	*pIq = -alpha * s + beta * c;
+	*pId =  Ialpha * c + Ibeta * s;
+	*pIq = -Ialpha * s + Ibeta * c;
 }
 /* 逆Park变换 (dq -> αβ) */
-void RevPark(float vd, float vq, float theta, float *pValpha, float *pVbeta)
+void RevPark(float Vd, float Vq, float theta, float *pValpha, float *pVbeta)
 {
 	float c = cosf(theta);
 	float s = sinf(theta);
-	*pValpha = vd * c - vq * s;
-	*pVbeta  = vd * s + vq * c;
+	*pValpha = Vd * c - Vq * s;
+	*pVbeta  = Vd * s + Vq * c;
 }
 void SVPWM(float Valpha, float Vbeta, float Udc, float Tpwm, float *Tcm1, float *Tcm2, float *Tcm3)
 {
+	/* Tpwm:定时器一次计数周期对应的计数值(需要区分边沿对齐和中心对齐) */
+
 	uint8_t sector = 0;
 	float Tx,Ty,T0,T,Ta,Tb,Tc;
 
@@ -119,4 +128,9 @@ void SVPWM(float Valpha, float Vbeta, float Udc, float Tpwm, float *Tcm1, float 
 	}
 }
 
+void FOC_Init(FOC_Info_t *pFOC)
+{
+	pFOC->Id_Ref = 0;
+	pFOC->Iq_Ref = 1.0f;
+}
 

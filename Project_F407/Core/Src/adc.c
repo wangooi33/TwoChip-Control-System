@@ -22,6 +22,7 @@
 
 /* USER CODE BEGIN 0 */
 #include "bldc_control.h"
+#include "w_adc.h"
 
 uint16_t gADC1CaptureBuffer[ADC1_CAPTURE_BUF_MAXSIZE];
 /* USER CODE END 0 */
@@ -433,7 +434,14 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* adcHandle)
 /* USER CODE BEGIN 1 */
 void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef * hadc)
 {
-	BLDC_Run();
+	if (BLDC_Info.ZeroOffsetFlag)
+	{
+		BLDC_Run();
+	}
+	else
+	{
+		Motor_CurrentOffsetCal(&BLDC_Info);
+	}
 }
 
 /* USER CODE END 1 */

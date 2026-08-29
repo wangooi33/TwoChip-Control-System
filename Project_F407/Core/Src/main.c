@@ -27,12 +27,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "w_adc.h"
+#include "foc.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "T001";
+const char SoftWareID[] = "T002";
 
 /* USER CODE END PTD */
 
@@ -104,8 +106,10 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim7);
-  BLDC_Enable();
   ADC_Enable();
+  BLDC_Enable();
+  BLDC_PidInit();
+  FOC_Init(&FOC_Info);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -113,7 +117,10 @@ int main(void)
   while (1)
   {
     TaskSchedule();
-	printf("%f,%f,%f,%f,%f,%f\n",Valpha,Vbeta,Tcm1,Tcm2,Tcm3);
+	//printf("%f,%f,%f\n",BLDC_Info.PhaseCurrent[0],BLDC_Info.PhaseCurrent[1],BLDC_Info.PhaseCurrent[2]);
+	//printf("%f,%f,%f,%f\n",FOC_Info.Ialpha,FOC_Info.Ibeta,FOC_Info.Id,FOC_Info.Iq);
+	printf("%f,%f,%f,%f\n",FOC_Info.Id_Ref,FOC_Info.Id,FOC_Info.Iq_Ref,FOC_Info.Iq);
+	//printf("%f,%f,%f,%f,%f,%f\n",FOC_Info.Valpha,FOC_Info.Vbeta,FOC_Info.Tcm1,FOC_Info.Tcm2,FOC_Info.Tcm3);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

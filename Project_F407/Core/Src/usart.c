@@ -21,7 +21,6 @@
 #include "usart.h"
 
 /* USER CODE BEGIN 0 */
-#include <stdio.h>
 uint8_t gU1TxRxBuf[U1_TXRX_BUFMAX];
 /* USER CODE END 0 */
 

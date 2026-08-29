@@ -29,6 +29,7 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
+#include <stdio.h>
 
 /* USER CODE END Includes */
 
@@ -42,6 +43,9 @@ void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 extern uint8_t gU1TxRxBuf[U1_TXRX_BUFMAX];
+
+int fputc(int ch, FILE *f);
+
 /* USER CODE END Prototypes */
 
 #ifdef __cplusplus

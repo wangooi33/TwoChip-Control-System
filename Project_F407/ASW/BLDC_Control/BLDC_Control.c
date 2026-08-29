@@ -1,13 +1,14 @@
 /* includes ------------------------------------------------------------------*/
 #include "bldc_control.h"
+#include "tim.h"
 #include "w_adc.h"
-
-/* annotation ----------------------------------------------------------------*/
-
-//死区时间 = 2 *(31 + 8) + 20 = 108
+#include "foc.h"
+#include "pid.h"
 
 /* global variable -----------------------------------------------------------*/
 BLDC_Info_t BLDC_Info;
+PID_t d_pid;
+PID_t q_pid;
 
 /* public functions ----------------------------------------------------------*/
 void BLDC_Enable(void)
@@ -35,23 +36,35 @@ void BLDC_Disable(void)
 
 	BLDC_SD_DISABLE();
 }
-float Valpha,Vbeta,Tcm1,Tcm2,Tcm3;
-
+void BLDC_PidInit(void)
+{
+	PID_Init(&d_pid,2.0f,0.5f,0,5,0,0.0001f);
+	PID_Init(&q_pid,3.0f,0.5f,0,5,0,0.0001f);
+}
 void BLDC_Run(void)
 {
 	static float theta;
-
-	theta += 0.005f;
+	theta -= 0.005f; /* 逆时针 */
+	//theta += 0.005f; /* 顺时针 */
 	if (theta > 2 * PI)
 		theta -= 2 * PI;
 	else if (theta < 0)
 		theta += 2 * PI;
 
-	RevPark(0,1,theta,&Valpha,&Vbeta);
-	SVPWM(Valpha,Vbeta,24.0f, 20000,&Tcm1,&Tcm2,&Tcm3);
+	BLDC_PhaseCurrentCal();
+	
+	Clark(BLDC_Info.PhaseCurrent[0],BLDC_Info.PhaseCurrent[1],&FOC_Info.Ialpha,&FOC_Info.Ibeta);
+	Park(FOC_Info.Ialpha,FOC_Info.Ibeta,theta,&FOC_Info.Id,&FOC_Info.Iq);
 
-	TIM1->CCR1 = Tcm1;
-	TIM1->CCR2 = Tcm2;
-	TIM1->CCR3 = Tcm3;
+	/* 电流环 */
+	FOC_Info.Vd = PID_Update(&d_pid,FOC_Info.Id_Ref,FOC_Info.Id);
+	FOC_Info.Vq = PID_Update(&q_pid,FOC_Info.Iq_Ref,FOC_Info.Iq);
+
+	RevPark(FOC_Info.Vd,FOC_Info.Vq,theta,&FOC_Info.Valpha,&FOC_Info.Vbeta);
+	SVPWM(FOC_Info.Valpha,FOC_Info.Vbeta,24.0f, (8400.0f * 2.0f),&FOC_Info.Tcm1,&FOC_Info.Tcm2,&FOC_Info.Tcm3);
+
+	TIM1->CCR1 = FOC_Info.Tcm1;
+	TIM1->CCR2 = FOC_Info.Tcm2;
+	TIM1->CCR3 = FOC_Info.Tcm3;
 }
 

@@ -7,19 +7,19 @@ extern "C" {
 
 /* includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "foc.h"
-#include "tim.h"
 
 /* macro ---------------------------------------------------------------------*/
 
-/* 定时器参数 */
-#define PWM_PERIOD							(8399U)
-#define TIM_CLK_HZ							(168000000.0f)	/* 中心对齐计数频率   */
-#define BLDC_POLE_PAIRS						(2U)			/* 电机极对数 */
+/* 电机硬件参数 */
+#define BLDC_POLE_PAIRS				(2U)			/* 电机极对数 */
+#define BLDC_L						(0.00112f)		/* 线电感 */
+#define BLDC_R						(0.42f)			/* 线电阻 */
+
+#define Wc							(1000 * PI)		/* ωc */
 
 /* shutdown */
-#define BLDC_SD_ENABLE()                HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_SET)
-#define BLDC_SD_DISABLE()               HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_RESET)
+#define BLDC_SD_ENABLE()			HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_SET)
+#define BLDC_SD_DISABLE() 			HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_RESET)
 
 /* enum ----------------------------------------------------------------------*/
 typedef enum
@@ -38,15 +38,16 @@ typedef struct
 
 typedef struct
 {
-	float ZeroOffset[3];		/* 三相零电流时的电压偏置(ADC原始值) */
+	uint16_t ZeroOffsetADC[3];	/* 三相零电流时的电压偏置(ADC原始值) */
+	uint8_t ZeroOffsetFlag;		/* 是否完成偏置计算 */
 	float Power;				/* 母线电压 */
 	float PhaseCurrent[3];		/* 三相电流, 采样/滤波后 */
 	float MotorTemperature;		/* 电机温度 */
+
+	MotorDir_t Direction;
+	float RPM;
 	
-    PhaseCurrFilt_t CurrFilt;    /* 三相电流一阶低通滤波值 [mA] */
-    float RPM;
     float CurrentAngleDeg;       /* 当前机械角度 [°], Hall 累计 */
-    MotorDir_t Direction;
     int32_t HallStepCount;       /* Hall 扇区步进计数, 位置累计 */
     uint8_t MotorRunning;        /* 电机运行标志: 1=运行 */
     uint8_t MotorStalling;       /* 堵转/故障标志: 1=故障停机 */
@@ -54,10 +55,11 @@ typedef struct
 
 /* global variable -----------------------------------------------------------*/
 extern BLDC_Info_t BLDC_Info;
-extern float Valpha,Vbeta,Tcm1,Tcm2,Tcm3;
+
 /* functions prototypes ------------------------------------------------------*/
 void BLDC_Enable(void);
 void BLDC_Disable(void);
+void BLDC_PidInit(void);
 void BLDC_Run(void);
 
 

@@ -1,7 +1,12 @@
+/* Includes ------------------------------------------------------------------*/
 #include "task.h"
+#include "w_adc.h"
+#include "key.h"
 
+/* global variable -----------------------------------------------------------*/
 volatile uint32_t SystemRunTime_1ms = 0;
 
+/* public functions ----------------------------------------------------------*/
 uint32_t GetTick_1ms(void)
 {
   return SystemRunTime_1ms;
@@ -28,18 +33,19 @@ void Task_20ms()
 }
 void Task_50ms()
 {
-
+	KeyTask_Cyclic();
 }
 void Task_100ms()
 {
-
+	
 }
 void Task_500ms()
 {
-
+	BLDC_VBusCal();
 }
 void Task_1000ms()
 {
+	BLDC_TemperatureCal();
 	LED4_TOGGLE;
 }
 void TaskSchedule()
