@@ -55,7 +55,7 @@ typedef struct
 
 /* global variable -----------------------------------------------------------*/
 extern BLDC_Info_t BLDC_Info;
-
+extern float theta;
 /* functions prototypes ------------------------------------------------------*/
 void BLDC_Enable(void);
 void BLDC_Disable(void);

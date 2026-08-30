@@ -29,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "w_adc.h"
 #include "foc.h"
+#include "hall.h"
 
 /* USER CODE END Includes */
 
@@ -99,13 +100,13 @@ int main(void)
   MX_CRC_Init();
   MX_TIM7_Init();
   MX_TIM3_Init();
-  MX_TIM5_Init();
   MX_ADC3_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim7);
+  Hall_Enable();
   ADC_Enable();
   BLDC_Enable();
   BLDC_PidInit();
@@ -119,8 +120,9 @@ int main(void)
     TaskSchedule();
 	//printf("%f,%f,%f\n",BLDC_Info.PhaseCurrent[0],BLDC_Info.PhaseCurrent[1],BLDC_Info.PhaseCurrent[2]);
 	//printf("%f,%f,%f,%f\n",FOC_Info.Ialpha,FOC_Info.Ibeta,FOC_Info.Id,FOC_Info.Iq);
-	printf("%f,%f,%f,%f\n",FOC_Info.Id_Ref,FOC_Info.Id,FOC_Info.Iq_Ref,FOC_Info.Iq);
+	//printf("%f,%f,%f,%f\n",FOC_Info.Id_Ref,FOC_Info.Id,FOC_Info.Iq_Ref,FOC_Info.Iq);
 	//printf("%f,%f,%f,%f,%f,%f\n",FOC_Info.Valpha,FOC_Info.Vbeta,FOC_Info.Tcm1,FOC_Info.Tcm2,FOC_Info.Tcm3);
+	printf("%d,%f,%f,%f,%f,%f,%f,%f\n",Hall_Info.State,theta,Hall_Info.Theta[0],Hall_Info.Theta[1],Hall_Info.Theta[2],Hall_Info.Theta[3],Hall_Info.Theta[4],Hall_Info.Theta[5]);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

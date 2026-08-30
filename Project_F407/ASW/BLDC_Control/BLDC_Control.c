@@ -41,11 +41,12 @@ void BLDC_PidInit(void)
 	PID_Init(&d_pid,2.0f,0.5f,0,5,0,0.0001f);
 	PID_Init(&q_pid,3.0f,0.5f,0,5,0,0.0001f);
 }
+float theta;
 void BLDC_Run(void)
 {
-	static float theta;
-	theta -= 0.005f; /* 逆时针 */
-	//theta += 0.005f; /* 顺时针 */
+	//static float theta;
+	//theta -= 0.005f; /* 逆时针 */
+	theta += 0.005f; /* 顺时针 */
 	if (theta > 2 * PI)
 		theta -= 2 * PI;
 	else if (theta < 0)

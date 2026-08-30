@@ -1,14 +1,16 @@
 /* includes ------------------------------------------------------------------*/
-#include "Hall.h"
+#include "hall.h"
 #include "tim.h"
 
 /* global variable -----------------------------------------------------------*/
-Hall_Info_t Hall_Info =
-{
-    .HallFirstEdge = 1
-};
+Hall_Info_t Hall_Info;
 
-/* local helpers -------------------------------------------------------------*/
+/* public functions ----------------------------------------------------------*/
+void Hall_Enable(void)
+{
+	__HAL_TIM_ENABLE_IT(&htim3,TIM_IT_TRIGGER);
+	HAL_TIMEx_HallSensor_Start_IT(&htim3);
+}
 
 /* 判断 Hall 状态跳变方向: 正转 +1, 反转 -1 */
 static int8_t Hall_GetStepDelta( uint8_t previousHall, uint8_t currentHall )
@@ -44,49 +46,6 @@ static int8_t Hall_GetStepDelta( uint8_t previousHall, uint8_t currentHall )
     }
 
     return 0;
-}
-
-/* public functions ----------------------------------------------------------*/
-
-/* 启动 Hall 采集: 复位状态并打开 TIM5 捕获中断 */
-void Hall_Start( void )
-{
-    Hall_Info.HallFirstEdge = 1U;
-    Hall_Info.HallEdgeFlag = 0U;
-    Hall_Info.HallTickCnt = 0U;
-    Hall_Info.HallStateShadow = Hall_GetState();
-    Hall_Info.HallLastEdgeMs = SystemRunTime_1ms;
-    Hall_Info.HallSectorStartMs = SystemRunTime_1ms;
-    Hall_Info.HallSectorPeriodMs = 0U;
-
-    HAL_TIMEx_HallSensor_Start_IT(&htim5);
-}
-
-void Hall_Disable( void )
-{
-    __HAL_TIM_DISABLE_IT(&htim5, TIM_IT_TRIGGER);
-    __HAL_TIM_DISABLE_IT(&htim5, TIM_IT_UPDATE);
-    HAL_TIMEx_HallSensor_Stop(&htim5);
-}
-
-/* 读取三路 Hall 状态, 编码为 1~6 */
-uint8_t Hall_GetState( void )
-{
-    uint8_t state = 0U;
-
-    if ( HAL_GPIO_ReadPin(GPIOH, GPIO_PIN_10) != GPIO_PIN_RESET )
-    {
-        state |= 0x01U << 0;
-    }
-    if ( HAL_GPIO_ReadPin(GPIOH, GPIO_PIN_11) != GPIO_PIN_RESET )
-    {
-        state |= 0x01U << 1;
-    }
-    if ( HAL_GPIO_ReadPin(GPIOH, GPIO_PIN_12) != GPIO_PIN_RESET )
-    {
-        state |= 0x01U << 2;
-    }
-    return state;
 }
 
 /* 每个有效 Hall 跳变对应机械角度前进一步, 同时记录扇区时间用于插值 */
