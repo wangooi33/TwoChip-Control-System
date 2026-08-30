@@ -19,9 +19,10 @@ extern "C" {
 typedef struct
 {
 	uint8_t State;
-	float Theta[6];
-	uint32_t LastCnt;
-	uint32_t TimerCount[6];
+	float angle;
+	float angle_inc;
+	uint32_t TimerCnt;
+	float Speed;
 
     volatile uint32_t HallLastEdgeMs;       /* 最近一次 Hall 沿时刻 [ms] */
     volatile uint32_t HallSectorStartMs;    /* 进入当前 Hall 扇区的时刻 [ms] */

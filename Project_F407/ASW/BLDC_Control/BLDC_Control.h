@@ -22,20 +22,8 @@ extern "C" {
 #define BLDC_SD_DISABLE() 			HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_RESET)
 
 /* enum ----------------------------------------------------------------------*/
-typedef enum
-{
-    MOTOR_REV = 0,
-    MOTOR_FWD,
-} MotorDir_t;
 
 /* types ---------------------------------------------------------------------*/
-typedef struct
-{
-    float U_CurrFilt;
-    float V_CurrFilt;
-    float W_CurrFilt;
-} PhaseCurrFilt_t;
-
 typedef struct
 {
 	uint16_t ZeroOffsetADC[3];	/* 三相零电流时的电压偏置(ADC原始值) */
@@ -43,8 +31,9 @@ typedef struct
 	float Power;				/* 母线电压 */
 	float PhaseCurrent[3];		/* 三相电流, 采样/滤波后 */
 	float MotorTemperature;		/* 电机温度 */
-
-	MotorDir_t Direction;
+	uint8_t Direction;			/* 1:顺时针正转 */
+	float Theta;
+	
 	float RPM;
 	
     float CurrentAngleDeg;       /* 当前机械角度 [°], Hall 累计 */

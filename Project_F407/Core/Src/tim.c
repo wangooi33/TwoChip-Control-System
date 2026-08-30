@@ -377,7 +377,7 @@ void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == TIM3)
 	{
-		Hall_Info.LastCnt = TIM3->CCR1;
+		Hall_Info.TimerCnt += TIM3->CCR1;
 		__HAL_TIM_SET_COUNTER(&htim3,0);
 		
 		Hall_Info.State = HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_6);
@@ -386,30 +386,26 @@ void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim)
 		switch (Hall_Info.State)
 		{
 			case 6:
-				Hall_Info.Theta[0] = theta;
-				Hall_Info.TimerCount[0] = Hall_Info.LastCnt;
+				Hall_Info.angle = 0.1427f;
 				break;
 			case 4:
-				Hall_Info.Theta[1] = theta;
-				Hall_Info.TimerCount[1] = Hall_Info.LastCnt;
+				Hall_Info.angle = 1.2443f;
 				break;
 			case 5:
-				Hall_Info.Theta[2] = theta;
-				Hall_Info.TimerCount[2] = Hall_Info.LastCnt;
+				Hall_Info.angle = 2.2409f;
 				break;
 			case 1:
-				Hall_Info.Theta[3] = theta;
-				Hall_Info.TimerCount[3] = Hall_Info.LastCnt;
+				Hall_Info.angle = 3.2901f;
 				break;
 			case 3:
-				Hall_Info.Theta[4] = theta;
-				Hall_Info.TimerCount[4] = Hall_Info.LastCnt;
+				Hall_Info.angle = 4.4795f;
 				break;
 			case 2:
-				Hall_Info.Theta[5] = theta;
-				Hall_Info.TimerCount[5] = Hall_Info.LastCnt;
+				Hall_Info.angle = 5.3862f;
+				Hall_Info.Speed = 2 * PI / Hall_Info.TimerCnt * 1000000;
+				Hall_Info.TimerCnt = 0;
+				Hall_Info.angle_inc = Hall_Info.Speed * 0.0001f;
 				break;
-
 		}
 	}
 }

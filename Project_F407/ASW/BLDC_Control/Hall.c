@@ -60,7 +60,7 @@ void Hall_OnTransition( uint8_t previousHall, uint8_t currentHall )
         {
             return;
         }
-        stepDelta = (BLDC_Info.Direction == MOTOR_FWD) ? 1 : -1;
+        //stepDelta = (BLDC_Info.Direction == MOTOR_FWD) ? 1 : -1;
     }
 
     /* 记录当前扇区用时, 并更新扇区起点时刻 */
