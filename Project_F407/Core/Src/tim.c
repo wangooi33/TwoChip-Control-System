@@ -402,9 +402,10 @@ void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim)
 				break;
 			case 2:
 				Hall_Info.angle = 5.3862f;
-				Hall_Info.Speed = 2 * PI / Hall_Info.TimerCnt * 1000000;
+				Hall_Info.Speed = 2 * PI / Hall_Info.TimerCnt * 1000000.0f;
+				Hall_Info.Speed_Filter += 0.2f * (Hall_Info.Speed - Hall_Info.Speed_Filter);/* 电角速度,rad/s */
+				Hall_Info.angle_inc = Hall_Info.Speed_Filter * 0.0001f;
 				Hall_Info.TimerCnt = 0;
-				Hall_Info.angle_inc = Hall_Info.Speed * 0.0001f;
 				break;
 		}
 	}

@@ -2,6 +2,7 @@
 #include "task.h"
 #include "w_adc.h"
 #include "key.h"
+#include "hall.h"
 
 /* global variable -----------------------------------------------------------*/
 volatile uint32_t SystemRunTime_1ms = 0;
@@ -13,7 +14,10 @@ uint32_t GetTick_1ms(void)
 }
 void Task_1ms()
 {
-
+	if (Hall_Info.ClosedLoop_Flag == 1)
+	{
+		BLDC_SpeedPID();
+	}
 }
 void Task_2ms()
 {

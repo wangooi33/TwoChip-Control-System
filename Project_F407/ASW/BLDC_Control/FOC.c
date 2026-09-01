@@ -30,9 +30,9 @@ void RevPark(float Vd, float Vq, float theta, float *pValpha, float *pVbeta)
 	*pValpha = Vd * c - Vq * s;
 	*pVbeta  = Vd * s + Vq * c;
 }
-void SVPWM(float Valpha, float Vbeta, float Udc, float Tpwm, float *Tcm1, float *Tcm2, float *Tcm3)
+void SVPWM(float Valpha, float Vbeta, float Udc, float Tperiod_count, float *Tcm1, float *Tcm2, float *Tcm3)
 {
-	/* Tpwm:定时器一次计数周期对应的计数值(需要区分边沿对齐和中心对齐) */
+	/* Tperiod_count:定时器一次计数周期对应的计数值(需要区分边沿对齐和中心对齐) */
 
 	uint8_t sector = 0;
 	float Tx,Ty,T0,T,Ta,Tb,Tc;
@@ -55,39 +55,39 @@ void SVPWM(float Valpha, float Vbeta, float Udc, float Tpwm, float *Tcm1, float 
 	switch (sector)
 	{
 		case 1:
-			Tx = SQRT3 * Tpwm / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
-			Ty = SQRT3 * Tpwm / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Tx = SQRT3 * Tperiod_count / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Ty = SQRT3 * Tperiod_count / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
 			break;
 		case 2:
-			Tx = SQRT3 * Tpwm / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
-			Ty = -SQRT3 * Tpwm * Vbeta / Udc;
+			Tx = SQRT3 * Tperiod_count / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Ty = -SQRT3 * Tperiod_count * Vbeta / Udc;
 			break;
 		case 3:
-			Tx = -SQRT3 * Tpwm / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
-			Ty = SQRT3 * Tpwm * Vbeta / Udc;
+			Tx = -SQRT3 * Tperiod_count / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Ty = SQRT3 * Tperiod_count * Vbeta / Udc;
 			break;
 		case 4:
-			Tx = -SQRT3 * Tpwm * Vbeta / Udc;
-			Ty = SQRT3 * Tpwm / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Tx = -SQRT3 * Tperiod_count * Vbeta / Udc;
+			Ty = SQRT3 * Tperiod_count / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
 			break;
 		case 5:
-			Tx = SQRT3 * Tpwm * Vbeta / Udc;
-			Ty = -SQRT3 * Tpwm / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Tx = SQRT3 * Tperiod_count * Vbeta / Udc;
+			Ty = -SQRT3 * Tperiod_count / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
 			break;
 		default:
-			Tx = -SQRT3 * Tpwm / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
-			Ty = -SQRT3 * Tpwm / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Tx = -SQRT3 * Tperiod_count / Udc * (SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
+			Ty = -SQRT3 * Tperiod_count / Udc * (-SQRT3_BY_2 * Valpha + 0.5f * Vbeta);
 			break;
 	}
 
 	/* 过调制 */
 	T = Tx + Ty;
-	if (T > Tpwm)
+	if (T > Tperiod_count)
 	{
-		Tx = Tx * Tpwm / T;
-		Ty = Ty * Tpwm / T;
+		Tx = Tx * Tperiod_count / T;
+		Ty = Ty * Tperiod_count / T;
 	}
-	T0 = Tpwm - Tx -Ty;
+	T0 = Tperiod_count - Tx -Ty;
 	
 	/* 扇区切换时间点 */
 	Ta = T0 / 4.0f;

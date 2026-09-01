@@ -31,7 +31,7 @@ typedef struct
 	float Vd;
 	float Vq;
 
-	/* to motor */
+	/* to timer */
 	float Tcm1;
 	float Tcm2;
 	float Tcm3;
@@ -39,8 +39,8 @@ typedef struct
 	/* ---- 期待值 ---- */
 	float Id_Ref;				/* d轴电流目标 (励磁) */
 	float Iq_Ref;				/* q轴电流目标 (力矩) */
-	float SpeedRef;				/* 速度环目标 (RPM) */
-	float PositionRef;			/* 位置环目标 (机械角度) */
+	float Speed_Ref;			/* 速度环目标 (RPM) */
+	float Position_Ref;			/* 位置环目标 (机械角度) */
 } FOC_Info_t;
 
 /* global variable -----------------------------------------------------------*/
@@ -50,7 +50,7 @@ extern FOC_Info_t FOC_Info;
 void Clark(float Ia, float Ib, float *pIalpha, float *pIbeta);
 void Park(float Ialpha, float Ibeta, float theta, float *pId, float *pIq);
 void RevPark(float Vd, float Vq, float theta, float *pValpha, float *pVbeta);
-void SVPWM(float Valpha, float Vbeta, float Udc, float Tpwm, float *Tcm1, float *Tcm2, float *Tcm3);
+void SVPWM(float Valpha, float Vbeta, float Udc, float Tperiod_count, float *Tcm1, float *Tcm2, float *Tcm3);
 void FOC_Init(FOC_Info_t *pFOC);
 
 #ifdef __cplusplus

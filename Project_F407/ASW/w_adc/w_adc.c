@@ -55,6 +55,7 @@ void BLDC_PhaseCurrentCal(void)
 		BLDC_Info.PhaseCurrent[0] = currentU;
 		BLDC_Info.PhaseCurrent[1] = currentV;
 		BLDC_Info.PhaseCurrent[2] = currentW;
+		filterInit = 1;
 	}
 	else
 	{

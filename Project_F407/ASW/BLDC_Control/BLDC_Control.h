@@ -45,11 +45,14 @@ typedef struct
 /* global variable -----------------------------------------------------------*/
 extern BLDC_Info_t BLDC_Info;
 extern float theta;
+extern float rpm_temp;
+
 /* functions prototypes ------------------------------------------------------*/
 void BLDC_Enable(void);
 void BLDC_Disable(void);
 void BLDC_PidInit(void);
 void BLDC_Run(void);
+void BLDC_SpeedPID(void);
 
 
 #ifdef __cplusplus

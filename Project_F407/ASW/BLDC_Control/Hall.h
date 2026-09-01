@@ -19,15 +19,17 @@ extern "C" {
 typedef struct
 {
 	uint8_t State;
+	uint32_t TimerCnt;
 	float angle;
 	float angle_inc;
-	uint32_t TimerCnt;
 	float Speed;
+	float Speed_Filter;			/* 霍尔速度滤波值 */
+	uint8_t ClosedLoop_Flag;	/* 闭环标志位 */
 
-    volatile uint32_t HallLastEdgeMs;       /* 最近一次 Hall 沿时刻 [ms] */
-    volatile uint32_t HallSectorStartMs;    /* 进入当前 Hall 扇区的时刻 [ms] */
-    volatile uint32_t HallSectorPeriodMs;   /* 上一个 Hall 扇区用时 [ms] */
-    uint8_t  HallFirstEdge;
+	uint32_t HallLastEdgeMs;       /* 最近一次 Hall 沿时刻 [ms] */
+	uint32_t HallSectorStartMs;    /* 进入当前 Hall 扇区的时刻 [ms] */
+	uint32_t HallSectorPeriodMs;   /* 上一个 Hall 扇区用时 [ms] */
+	uint8_t HallFirstEdge;
 } Hall_Info_t;
 
 /* global variable -----------------------------------------------------------*/

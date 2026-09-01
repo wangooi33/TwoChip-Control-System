@@ -10,6 +10,7 @@
 BLDC_Info_t BLDC_Info;
 PID_t d_pid;
 PID_t q_pid;
+PID_t speed_pid;
 
 float theta;
 uint16_t cnt;
@@ -24,6 +25,8 @@ void BLDC_Enable(void)
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 	BLDC_SD_ENABLE();
+
+	BLDC_Info.Direction = 1;
 }
 void BLDC_Disable(void)
 {
@@ -44,11 +47,21 @@ void BLDC_PidInit(void)
 {
 	PID_Init(&d_pid,2.0f,0.5f,0,5,0,0.0001f);
 	PID_Init(&q_pid,3.0f,0.5f,0,5,0,0.0001f);
+	PID_Init(&speed_pid,0.03f,0.02f,0,1.5f,0.5f,0.001f);
+	
+	FOC_Info.Speed_Ref = 400.0f;
 }
 void BLDC_Run(void)
 {
 	/* 霍尔角度插值 */
-	Hall_Info.angle += Hall_Info.angle_inc;
+	if (BLDC_Info.Direction == 1)
+	{
+		Hall_Info.angle += Hall_Info.angle_inc;
+	}
+	else
+	{
+		Hall_Info.angle -= Hall_Info.angle_inc;
+	}
 	if (Hall_Info.angle > 2 * PI)
 	{
 		Hall_Info.angle -= 2 * PI;
@@ -82,9 +95,11 @@ void BLDC_Run(void)
 	}
 	else
 	{
+		Hall_Info.ClosedLoop_Flag = 1;
 		BLDC_Info.Theta = Hall_Info.angle;
 	}
 
+	/* 三相电流采集 */
 	BLDC_PhaseCurrentCal();
 	
 	Clark(BLDC_Info.PhaseCurrent[0],BLDC_Info.PhaseCurrent[1],&FOC_Info.Ialpha,&FOC_Info.Ibeta);
@@ -101,4 +116,61 @@ void BLDC_Run(void)
 	TIM1->CCR2 = FOC_Info.Tcm2;
 	TIM1->CCR3 = FOC_Info.Tcm3;
 }
+float rpm_temp;
+void BLDC_SpeedPID(void)
+{
+	static uint8_t speedInit = 0;
+	static float rampRef = 0.0f;
 
+	float speed_rpm = Hall_Info.Speed_Filter / BLDC_POLE_PAIRS * 60.0f / (2.0f * PI);
+
+	float error;
+	float out;
+	
+	rpm_temp = speed_rpm;
+	if (BLDC_Info.Direction == 1)
+	{
+		speed_rpm = speed_rpm;
+	}
+	else
+	{
+		speed_rpm = -speed_rpm;
+	}
+	if (speedInit == 0)
+	{
+		rampRef = speed_rpm;
+		speed_pid.Integral = FOC_Info.Iq_Ref;
+		speed_pid.PrevErr = 0.0f;
+		speedInit = 1;
+	}
+
+	/* 约 20 RPM/s 的斜坡 */
+	if (rampRef > FOC_Info.Speed_Ref)
+	{
+		rampRef -= 0.02f;
+		if (rampRef < FOC_Info.Speed_Ref)
+		{
+			rampRef = FOC_Info.Speed_Ref;
+		}
+	}
+	else if (rampRef < FOC_Info.Speed_Ref)
+	{
+		rampRef += 0.02f;
+		if (rampRef > FOC_Info.Speed_Ref)
+		{
+			rampRef = FOC_Info.Speed_Ref;
+		}
+    }
+	error = rampRef - speed_rpm;
+	out = speed_pid.Kp * error + speed_pid.Integral;
+
+	/* 只有未饱和时才积分，防止反向制动时积分越积越负 */
+	if (out > -speed_pid.Limit && out < speed_pid.Limit)
+	{
+		speed_pid.Integral += speed_pid.Ki * error * speed_pid.Ts;
+	}
+	speed_pid.Integral = Clampf(speed_pid.Integral, -speed_pid.Limit, speed_pid.Limit);
+
+	/* 限幅 */
+	FOC_Info.Iq_Ref = Clampf(out,-speed_pid.Limit,speed_pid.Limit);
+}
