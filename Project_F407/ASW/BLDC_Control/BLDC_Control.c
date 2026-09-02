@@ -46,8 +46,8 @@ void BLDC_Disable(void)
 void BLDC_PidInit(void)
 {
 	PID_Init(&d_pid,2.0f,0.5f,0,5,0,0.0001f);
-	PID_Init(&q_pid,3.0f,0.5f,0,5,0,0.0001f);
-	PID_Init(&speed_pid,0.03f,0.02f,0,1.5f,0.5f,0.001f);
+	PID_Init(&q_pid,1.0f,0.5f,0,5,0,0.0001f);
+	PID_Init(&speed_pid,0.03f,0.02f,0,4.0f,0.5f,0.001f);
 	
 	FOC_Info.Speed_Ref = 400.0f;
 }
@@ -110,13 +110,12 @@ void BLDC_Run(void)
 	FOC_Info.Vq = PID_Update(&q_pid,FOC_Info.Iq_Ref,FOC_Info.Iq);
 
 	RevPark(FOC_Info.Vd,FOC_Info.Vq,BLDC_Info.Theta,&FOC_Info.Valpha,&FOC_Info.Vbeta);
-	SVPWM(FOC_Info.Valpha,FOC_Info.Vbeta,24.0f, (8400.0f * 2.0f),&FOC_Info.Tcm1,&FOC_Info.Tcm2,&FOC_Info.Tcm3);
+	SVPWM(FOC_Info.Valpha,FOC_Info.Vbeta,24.0f,8400.0f,&FOC_Info.Tcm1,&FOC_Info.Tcm2,&FOC_Info.Tcm3);
 
 	TIM1->CCR1 = FOC_Info.Tcm1;
 	TIM1->CCR2 = FOC_Info.Tcm2;
 	TIM1->CCR3 = FOC_Info.Tcm3;
 }
-float rpm_temp;
 void BLDC_SpeedPID(void)
 {
 	static uint8_t speedInit = 0;
@@ -127,7 +126,7 @@ void BLDC_SpeedPID(void)
 	float error;
 	float out;
 	
-	rpm_temp = speed_rpm;
+	BLDC_Info.RPM = speed_rpm;
 	if (BLDC_Info.Direction == 1)
 	{
 		speed_rpm = speed_rpm;

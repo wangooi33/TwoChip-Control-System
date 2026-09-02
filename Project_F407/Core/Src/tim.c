@@ -25,7 +25,7 @@
 #include "hall.h"
 #include "foc.h"
 #include "task.h"
-
+#include "adc.h"
 /* USER CODE END 0 */
 
 TIM_HandleTypeDef htim1;
@@ -362,15 +362,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if (htim->Instance == TIM7)
 	{
 		SystemRunTime_1ms++;
-		
-		if ( BLDC_Info.MotorRunning != 0U &&
-			(SystemRunTime_1ms - Hall_Info.HallLastEdgeMs) >= HALL_TIMEOUT_MS )
-		{
-			/* 堵转 */
-			BLDC_Info.RPM = 0.0f;
-			BLDC_Info.MotorStalling = 1;
-			Hall_Info.HallFirstEdge = 1;
-		}
 	}
 }
 void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim)

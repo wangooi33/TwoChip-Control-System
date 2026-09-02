@@ -35,7 +35,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "T004";
+const char SoftWareID[] = "T005";
 
 /* USER CODE END PTD */
 
@@ -123,8 +123,8 @@ int main(void)
 	//printf("%f,%f,%f,%f,%f,%f\n",FOC_Info.Valpha,FOC_Info.Vbeta,FOC_Info.Tcm1,FOC_Info.Tcm2,FOC_Info.Tcm3);
 	//printf("%f,%f,%f,%f,%f,%f\n",Hall_Info.Theta[0],Hall_Info.Theta[1],Hall_Info.Theta[2],Hall_Info.Theta[3],Hall_Info.Theta[4],Hall_Info.Theta[5]);
 	//printf("%f,%f,%f,%f,%f\n",theta,Hall_Info.angle,BLDC_Info.Theta,Hall_Info.angle_inc,Hall_Info.Speed);
-	printf("%f,%f,%f,%f\n",FOC_Info.Iq_Ref,FOC_Info.Iq,rpm_temp,FOC_Info.Speed_Ref);
-    /* USER CODE END WHILE */
+
+	/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }

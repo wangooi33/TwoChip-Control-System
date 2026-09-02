@@ -35,17 +35,11 @@ typedef struct
 	float Theta;
 	
 	float RPM;
-	
-    float CurrentAngleDeg;       /* 当前机械角度 [°], Hall 累计 */
-    int32_t HallStepCount;       /* Hall 扇区步进计数, 位置累计 */
-    uint8_t MotorRunning;        /* 电机运行标志: 1=运行 */
-    uint8_t MotorStalling;       /* 堵转/故障标志: 1=故障停机 */
 } BLDC_Info_t;
 
 /* global variable -----------------------------------------------------------*/
 extern BLDC_Info_t BLDC_Info;
 extern float theta;
-extern float rpm_temp;
 
 /* functions prototypes ------------------------------------------------------*/
 void BLDC_Enable(void);

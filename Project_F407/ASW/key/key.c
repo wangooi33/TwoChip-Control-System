@@ -60,6 +60,7 @@ void KeyTask_Cyclic( void )
 			break;
 
 		case KEY5_PRESS:
+			BLDC_Disable();
 			break;
 
 		default:
