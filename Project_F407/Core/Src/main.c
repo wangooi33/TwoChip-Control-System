@@ -118,12 +118,8 @@ int main(void)
   while (1)
   {
     TaskSchedule();
-	//printf("%f,%f,%f,%f,%f\n",BLDC_Info.PhaseCurrent[0],BLDC_Info.PhaseCurrent[1],BLDC_Info.PhaseCurrent[2],FOC_Info.Ialpha,FOC_Info.Ibeta);
-	//printf("%f,%f,%f,%f,%f,%f\n",,FOC_Info.Id,FOC_Info.Iq,FOC_Info.Id_Ref,FOC_Info.Iq_Ref,FOC_Info.Vd,FOC_Info.Vq);
-	//printf("%f,%f,%f,%f,%f,%f\n",FOC_Info.Valpha,FOC_Info.Vbeta,FOC_Info.Tcm1,FOC_Info.Tcm2,FOC_Info.Tcm3);
-	//printf("%f,%f,%f,%f,%f,%f\n",Hall_Info.Theta[0],Hall_Info.Theta[1],Hall_Info.Theta[2],Hall_Info.Theta[3],Hall_Info.Theta[4],Hall_Info.Theta[5]);
-	//printf("%f,%f,%f,%f,%f\n",theta,Hall_Info.angle,BLDC_Info.Theta,Hall_Info.angle_inc,Hall_Info.Speed);
-
+	printf("%f,%f,%f\n",FOC_Info.Iq_Ref,FOC_Info.Iq,FOC_Info.Vq);
+	
 	/* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

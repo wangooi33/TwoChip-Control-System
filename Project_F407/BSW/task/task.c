@@ -16,7 +16,7 @@ void Task_1ms()
 {
 	if (Hall_Info.ClosedLoop_Flag == 1)
 	{
-		BLDC_SpeedPID();
+		//BLDC_SpeedPID();
 	}
 }
 void Task_2ms()
