@@ -13,9 +13,6 @@ PID_t d_pid;
 PID_t q_pid;
 PID_t speed_pid;
 
-float theta;
-uint16_t cnt;
-
 /* public functions ----------------------------------------------------------*/
 void BLDC_Enable(void)
 {
@@ -26,8 +23,6 @@ void BLDC_Enable(void)
 	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 	HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 	BLDC_SD_ENABLE();
-
-	BLDC_Info.Direction = 1;
 }
 void BLDC_Disable(void)
 {
@@ -50,18 +45,16 @@ void BLDC_PidInit(void)
 	PID_Init(&q_pid,1.0f,0.5f,0,(24.0f * SQRT3 / 3.0f),0,0.0001f);
 	
 	PID_Init(&speed_pid,0.03f,0.02f,0,4.0f,0.5f,0.001f);
-	
 	FOC_Info.Speed_Ref = 400.0f;
 }
+
+#if 0
 void BLDC_SpeedPID(void)
 {
+	float error,out;
 	static uint8_t speedInit = 0;
 	static float rampRef = 0.0f;
-
-	float speed_rpm = Hall_Info.Speed_Filter / BLDC_POLE_PAIRS * 60.0f / (2.0f * PI);
-
-	float error;
-	float out;
+	float speed_rpm = Hall_Info.Speed_RPM;
 	
 	BLDC_Info.RPM = speed_rpm;
 	if (BLDC_Info.Direction == 1)
@@ -110,6 +103,7 @@ void BLDC_SpeedPID(void)
 	/* 限幅 */
 	FOC_Info.Iq_Ref = Clampf(out,-speed_pid.Limit,speed_pid.Limit);
 }
+#endif
 
 void BLDC_CurrentPID(void)
 {
@@ -129,57 +123,9 @@ void BLDC_CurrentPID(void)
 		FOC_Info.Vq *= scale;
 	}
 }
-
-void BLDC_Run(void)
+static void FOC_Run(void)
 {
-	/* 霍尔角度插值 */
-	if (BLDC_Info.Direction == 1)
-	{
-		Hall_Info.angle += Hall_Info.angle_inc;
-	}
-	else
-	{
-		Hall_Info.angle -= Hall_Info.angle_inc;
-	}
-	if (Hall_Info.angle > 2 * PI)
-	{
-		Hall_Info.angle -= 2 * PI;
-	}
-	else if (Hall_Info.angle < 0)
-	{
-		Hall_Info.angle += 2 * PI;
-	}
-
-	if (cnt < 10000)
-	{
-		cnt++;
-		/* 开环角度自增 */
-		if (BLDC_Info.Direction == 1)
-		{
-			theta += 0.005f;
-		}
-		else
-		{
-			theta -= 0.005f; /* 逆时针 */
-		}
-		if (theta > 2 * PI)
-		{
-			theta -= 2 * PI;
-		}
-		else if (theta < 0)
-		{
-			theta += 2 * PI;
-		}
-		BLDC_Info.Theta = theta;
-	}
-	else
-	{
-		Hall_Info.ClosedLoop_Flag = 1;
-		BLDC_Info.Theta = Hall_Info.angle;
-	}
-
-	/* 三相电流采集 */
-	BLDC_PhaseCurrentCal();
+	BLDC_Info.Theta = Hall_Info.angle;
 	
 	Clark(BLDC_Info.PhaseCurrent[0],BLDC_Info.PhaseCurrent[1],&FOC_Info.Ialpha,&FOC_Info.Ibeta);
 	Park(FOC_Info.Ialpha,FOC_Info.Ibeta,BLDC_Info.Theta,&FOC_Info.Id,&FOC_Info.Iq);
@@ -193,5 +139,92 @@ void BLDC_Run(void)
 	TIM1->CCR1 = FOC_Info.Tcm1;
 	TIM1->CCR2 = FOC_Info.Tcm2;
 	TIM1->CCR3 = FOC_Info.Tcm3;
+}
+void BLDC_Run(void)
+{
+	uint8_t hall_state;
+	
+	/* 三相电流采集 */
+	BLDC_PhaseCurrentCal();
+
+	switch (BLDC_Info.MotorRunStage)
+	{
+		case Motor_Start_Idle:
+			FOC_Info.Id_Ref = 0.0f;
+			FOC_Info.Iq_Ref = 0.0f;
+			BLDC_Info.MotorRunStage = Motor_Start_CheckHall;
+			break;
+			
+		case Motor_Start_CheckHall:
+			hall_state = Hall_ReadState();
+			if (hall_state == 0 || hall_state == 7)
+			{
+				BLDC_Info.MotorRunStage = Motor_Stop;
+			}
+			else
+			{
+				Hall_Info.state = hall_state;
+				BLDC_Info.MotorRunStage = Motor_Start_HallValid;
+			}
+			break;
+			
+		case Motor_Start_HallValid:
+			/* hall中心角: 60°区间 + 30° */
+			Hall_Info.hall_angle = hall_angle_table[Hall_Info.state] + PI / 6.0f;
+			Hall_Info.hall_angle = Angle_Normalize(Hall_Info.hall_angle);
+			/* 初始电角度 */
+			Hall_Info.angle = Hall_Info.hall_angle;
+			BLDC_Info.MotorRunStage = Motor_Start_Run;
+			break;
+			
+		case Motor_Start_Run:
+			FOC_Info.Id_Ref = 0.0f;
+			FOC_Info.Iq_Ref = 1.0f;
+
+			/* 启动阶段开环推进电角度 */
+			Hall_Info.angle += 0.005f;
+			if (Hall_Info.angle >= TWO_PI)
+			{
+				Hall_Info.angle -= TWO_PI;
+			}
+			
+			if (Hall_Info.new_event == 1)
+			{
+				Hall_Info.new_event = 0;
+				BLDC_Info.MotorRunStage = Motor_Start_Interpolation;
+			}
+			break;
+			
+		case Motor_Start_Interpolation:
+			/* 获取两次Hall跳变边沿之间的时间间隔 */
+			if (Hall_Info.hall_period > 0)
+			{
+				BLDC_Info.MotorRunStage = Motor_Run;
+			}
+			break;
+
+		case Motor_Run:
+			/* 霍尔角度插值 */
+			Hall_Interpolate(0.0001f);
+		
+//		    Hall_Info.angle += 0.005f;
+//			if (Hall_Info.angle >= TWO_PI)
+//			{
+//				Hall_Info.angle -= TWO_PI;
+//			}
+			break;
+			
+		case Motor_Stop:
+			FOC_Info.Id_Ref = 0.0f;
+			FOC_Info.Iq_Ref = 0.0f;
+			BLDC_Disable();
+			break;
+		
+		default:
+			BLDC_Info.MotorRunStage = Motor_Start_Idle;
+			break;
+	}
+	
+	FOC_Run();
 }
 

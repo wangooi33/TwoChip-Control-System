@@ -51,7 +51,6 @@ void Clark(float Ia, float Ib, float *pIalpha, float *pIbeta);
 void Park(float Ialpha, float Ibeta, float theta, float *pId, float *pIq);
 void RevPark(float Vd, float Vq, float theta, float *pValpha, float *pVbeta);
 void SVPWM(float Valpha, float Vbeta, float Udc, float Tperiod_count, float *Tcm1, float *Tcm2, float *Tcm3);
-void FOC_Init(FOC_Info_t *pFOC);
 
 #ifdef __cplusplus
 }

@@ -128,9 +128,3 @@ void SVPWM(float Valpha, float Vbeta, float Udc, float Tperiod_count, float *Tcm
 	}
 }
 
-void FOC_Init(FOC_Info_t *pFOC)
-{
-	pFOC->Id_Ref = 0;
-	pFOC->Iq_Ref = 1.0f;
-}
-

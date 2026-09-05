@@ -22,24 +22,33 @@ extern "C" {
 #define BLDC_SD_DISABLE() 			HAL_GPIO_WritePin(SD_GPIO_Port, SD_Pin, GPIO_PIN_RESET)
 
 /* enum ----------------------------------------------------------------------*/
+typedef enum
+{
+	Motor_Start_Idle,
+	Motor_Start_CheckHall,
+	Motor_Start_HallValid,
+	Motor_Start_Run,
+	Motor_Start_Interpolation,
+	Motor_Run,
+	Motor_Stop
+}MotorRunStage_t;
 
 /* types ---------------------------------------------------------------------*/
 typedef struct
 {
-	uint16_t ZeroOffsetADC[3];	/* 三相零电流时的电压偏置(ADC原始值) */
-	uint8_t ZeroOffsetFlag;		/* 是否完成偏置计算 */
-	float Power;				/* 母线电压 */
-	float PhaseCurrent[3];		/* 三相电流, 采样/滤波后 */
-	float MotorTemperature;		/* 电机温度 */
-	uint8_t Direction;			/* 1:顺时针正转 */
-	float Theta;
-	
+	uint16_t ZeroOffsetADC[3];		/* 三相零电流时的电压偏置(ADC原始值) */
+	uint8_t ZeroOffsetFlag;			/* 是否完成偏置计算 */
+	float Power;					/* 母线电压 */
+	float PhaseCurrent[3];			/* 三相电流, 采样/滤波后 */
+	float MotorTemperature;			/* 电机温度 */
+
+	float Theta;					/* FOC电角度 */
+	MotorRunStage_t MotorRunStage;
 	float RPM;
 } BLDC_Info_t;
 
 /* global variable -----------------------------------------------------------*/
 extern BLDC_Info_t BLDC_Info;
-extern float theta;
 
 /* functions prototypes ------------------------------------------------------*/
 void BLDC_Enable(void);

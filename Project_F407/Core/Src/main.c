@@ -35,7 +35,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-const char SoftWareID[] = "T005";
+const char SoftWareID[] = "T006";
 
 /* USER CODE END PTD */
 
@@ -110,7 +110,6 @@ int main(void)
   ADC_Enable();
   BLDC_Enable();
   BLDC_PidInit();
-  FOC_Init(&FOC_Info);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -118,9 +117,7 @@ int main(void)
   while (1)
   {
     TaskSchedule();
-	printf("%f,%f,%f\n",FOC_Info.Iq_Ref,FOC_Info.Iq,FOC_Info.Vq);
-	
-	/* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
   }

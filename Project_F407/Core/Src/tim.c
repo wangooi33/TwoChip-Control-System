@@ -364,41 +364,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		SystemRunTime_1ms++;
 	}
 }
-void HAL_TIM_TriggerCallback(TIM_HandleTypeDef *htim)
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Instance == TIM3)
+	if (htim->Instance == TIM3 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
 	{
-		Hall_Info.TimerCnt += TIM3->CCR1;
-		__HAL_TIM_SET_COUNTER(&htim3,0);
-		
-		Hall_Info.State = HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_6);
-		Hall_Info.State |= HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_7) << 1;
-		Hall_Info.State |= HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_8) << 2;
-		switch (Hall_Info.State)
-		{
-			case 6:
-				Hall_Info.angle = 0.1427f;
-				break;
-			case 4:
-				Hall_Info.angle = 1.2443f;
-				break;
-			case 5:
-				Hall_Info.angle = 2.2409f;
-				break;
-			case 1:
-				Hall_Info.angle = 3.2901f;
-				break;
-			case 3:
-				Hall_Info.angle = 4.4795f;
-				break;
-			case 2:
-				Hall_Info.angle = 5.3862f;
-				Hall_Info.Speed = 2 * PI / Hall_Info.TimerCnt * 1000000.0f;
-				Hall_Info.Speed_Filter += 0.2f * (Hall_Info.Speed - Hall_Info.Speed_Filter);/* 电角速度,rad/s */
-				Hall_Info.angle_inc = Hall_Info.Speed_Filter * 0.0001f;
-				Hall_Info.TimerCnt = 0;
-				break;
-		}
+		uint8_t hall_state;
+		uint32_t hall_period;
+
+		hall_state = Hall_ReadState();
+		hall_period = HAL_TIM_ReadCapturedValue(htim,TIM_CHANNEL_1);
+		Hall_UpdateEdge(hall_state,hall_period);
 	}
 }
 

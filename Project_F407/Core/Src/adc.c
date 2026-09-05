@@ -436,7 +436,7 @@ void HAL_ADCEx_InjectedConvCpltCallback(ADC_HandleTypeDef * hadc)
 {
 	if (BLDC_Info.ZeroOffsetFlag)
 	{
-		/* 100us */
+		/* 10kHz */
 		BLDC_Run();
 	}
 	else
