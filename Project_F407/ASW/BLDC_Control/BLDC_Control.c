@@ -8,7 +8,7 @@
 #include "hall.h"
 
 /* macro ---------------------------------------------------------------------*/
-#define SPEED_RAMP_RPM_PER_MS		(0.05f)		/* 50 RPM/s */
+#define SPEED_RAMP_RPM_PER_MS		(0.05f)		/* 每1ms变化0.05RPM */
 #define SPEED_PID_LIMIT				(3.0f)
 
 /* global variable -----------------------------------------------------------*/
@@ -73,46 +73,44 @@ float BLDC_GetCurrentTurns(void)
 
 uint8_t BLDC_PositionPID(void)
 {
-	/* 定位任务期间保持的本地状态 */
-	static uint8_t active = 0;
-	static float lastRef = 0.0f;
-	static float startSteps = 0.0f;
-	static float commandedElectricalDeg = 0.0f;
-
-	float targetTurns;
-	float targetSteps;
-	float traveledSteps;
+	static uint8_t active = 0;					/* 位置环是否在进行控制 */
+	static float lastRef = 0.0f;				/* 上一次执行位置移动时使用的Position_Ref */
+	static float startSteps = 0.0f;				/* 起点霍尔步数 */
+	static float commandedElectricalDeg = 0.0f;	/* 已经命令推进了多少电角度 */
+	static float stepElectricalDeg = BLDC_POSITION_START_ANGLE_STEP * (180.0f / PI);/* 位置环推进的电角度增量 */
+	static float oneHallTurn = 1.0f / (6.0f * (float)BLDC_POLE_PAIRS);/* 一个霍尔扇区对应的机械圈数 */
+	float targetTurns;			/* 目标机械圈数 */
+	float targetSteps;			/* 目标机械圈数对应的目标霍尔步数 */
+	float traveledSteps;		/* 从本次移动起点开始,实际已经走过了多少个霍尔步 */
 	float direction;
 	float speedRpm;
-	float stepElectricalDeg;
-	float oneHallTurn;
-
-	/* 目标位置只取幅值，运动方向由原始给定值的符号决定 */
+	
+	/* 目标位置只取幅值,运动方向由原始给定值的符号决定 */
 	targetTurns = fabsf(FOC_Info.Position_Ref);
-	oneHallTurn = 1.0f / (6.0f * (float)BLDC_POLE_PAIRS);
 	if (targetTurns < 0.0001f)
 	{
-		/* 无有效位置指令，退出定位模式，交回速度环 */
+		/* 无有效位置指令退出 */
 		active = 0;
 		lastRef = 0.0f;
 		return 0;
 	}
 
+	/* 外部修改了位置环目标,需要等待当前目标执行完毕 */
 	if (active == 0 || FOC_Info.Position_Ref != lastRef)
 	{
-		/* 首次进入或指令变化时，以当前霍尔步数作为本次行程起点 */
+		/* 首次进入或指令变化时,以当前霍尔步数作为本次行程起点 */
 		active = 1;
 		lastRef = FOC_Info.Position_Ref;
 		startSteps = (float)Hall_Info.hall_step_count;
 		commandedElectricalDeg = 0.0f;
 	}
 
-	/* 一对极对应6个霍尔沿，因此目标步数 = 圈数 * 极对数 * 6 */
+	/* 把目标圈数转化为霍尔步数:一对极对应6个霍尔沿,因此目标步数 = 圈数 * 极对数 * 6 */
 	targetSteps = targetTurns * (6.0f * (float)BLDC_POLE_PAIRS);
 	traveledSteps = fabsf((float)Hall_Info.hall_step_count - startSteps);
 	if (traveledSteps >= targetSteps)
 	{
-		/* 已走完目标步数，停止输出并清除位置指令 */
+		/* 已走完目标步数,停止输出并清除位置指令 */
 		FOC_Info.Iq_Ref = 0.0f;
 		FOC_Info.Position_Ref = 0.0f;
 		lastRef = 0.0f;
@@ -120,12 +118,10 @@ uint8_t BLDC_PositionPID(void)
 		return 0;
 	}
 
-	/* 原始位置指令为正时正转，为负时反转 */
 	direction = (FOC_Info.Position_Ref > 0.0f) ? 1.0f : -1.0f;
 	/* 将滤波后的电角速度折算为带符号机械转速 */
 	speedRpm = Hall_Info.speed_filter * 60.0f / (2.0f * PI * (float)BLDC_POLE_PAIRS);
 	BLDC_Info.RPM = speedRpm;
-
 	if (fabsf(speedRpm) > BLDC_POSITION_MAX_RPM)
 	{
 		/* 超过定位限速时停止输出，避免位置环持续加速 */
@@ -137,13 +133,12 @@ uint8_t BLDC_PositionPID(void)
 		FOC_Info.Iq_Ref = BLDC_POSITION_CURRENT;
 	}
 
-	/* 按固定电角步长推进转子角度，方向由位置指令决定 */
+	/* 开环推进FOC的转子电角度 */
 	Hall_Info.angle = Angle_Normalize(Hall_Info.angle + direction * BLDC_POSITION_START_ANGLE_STEP);
-	stepElectricalDeg = BLDC_POSITION_START_ANGLE_STEP * (180.0f / PI);
 	commandedElectricalDeg += stepElectricalDeg;
 	if (targetTurns < oneHallTurn && commandedElectricalDeg >= targetTurns * (float)BLDC_POLE_PAIRS * 360.0f)
 	{
-		/* 不足一个霍尔扇区的短行程，用累计推进电角度判断是否到位 */
+		/* 不足一个霍尔扇区的短行程,用累计推进电角度判断是否到位 */
 		FOC_Info.Iq_Ref = 0.0f;
 		FOC_Info.Position_Ref = 0.0f;
 		lastRef = 0.0f;
@@ -157,18 +152,18 @@ uint8_t BLDC_PositionPID(void)
 void BLDC_SpeedPID(void)
 {
 	static uint8_t speedLoopInited = 0;
-	static int8_t speedLoopDirection = 0;
-	static float rampRef = 0.0f;
-	float speedRpmSigned;   /* 带符号的实际机械转速，单位 RPM */
-	float speedRpm;         /* 速度环内部使用的转速绝对值,单位 RPM */
-	float speedRefAbs;      /* Speed_Ref 的绝对值,单位 RPM */
-	float error;            /* 速度误差：给定值 - 实际值 */
-	float outUnlimited;     /* 限幅前的 PI 输出电流 */
-	float out;              /* 限幅后的输出电流 */
-	float outMin;           /* 输出电流下限 */
-	float outMax;           /* 输出电流上限 */
-	int8_t targetDirection; /* Speed_Ref 当前要求的方向 */
-	uint8_t integrate;      /* 当前周期是否允许更新积分项 */
+	static int8_t speedLoopDirection = 0;	/* 上一次速度环使用的方向 */
+	static float rampRef = 0.0f;			/* 斜坡目标速度 */
+	float speedRpmSigned;	/* 带符号的实际机械转速,单位RPM */
+	float speedRpm;			/* 速度环内部使用的转速绝对值,单位RPM */
+	float speedRefAbs;		/* Speed_Ref的绝对值,单位RPM */
+	float error;			/* 速度误差:给定值 - 实际值 */
+	float outUnlimited;		/* 限幅前的PI输出电流 */
+	float out;				/* 限幅后的输出电流 */
+	float outMin;			/* 输出电流下限 */
+	float outMax;			/* 输出电流上限 */
+	int8_t targetDirection;	/* Speed_Ref 当前要求的方向 */
+	uint8_t integrate;		/* 当前周期是否允许更新积分项 */
 
 	if (BLDC_Info.MotorRunStage != Motor_Run)
 	{
@@ -176,15 +171,15 @@ void BLDC_SpeedPID(void)
 		return;
 	}
 
-	/* 霍尔滤波值是电角速度,先转换为机械 RPM。 */
+	/* 霍尔滤波值是电角速度,先转换为机械RPM */
 	speedRpmSigned = Hall_Info.speed_filter * 60.0f / (2.0f * PI * (float)BLDC_POLE_PAIRS);
 
-	/* 速度环统一使用绝对值,方向只由 Speed_Ref 的符号决定。 */
+	/* 速度环统一使用绝对值,方向只由Speed_Ref的符号决定。 */
 	speedRpm = fabsf(speedRpmSigned);
 	speedRefAbs = fabsf(FOC_Info.Speed_Ref);
 	targetDirection = (FOC_Info.Speed_Ref < 0.0f) ? -1 : 1;
 
-	/* 目标方向改变时不直接闭环刹车,而是重新走开环启动。 */
+	/* 方向改变时,重新走开环启动 */
 	if (speedLoopDirection != 0 && speedLoopDirection != targetDirection)
 	{
 		speedLoopDirection = targetDirection;
@@ -194,8 +189,7 @@ void BLDC_SpeedPID(void)
 		return;
 	}
 	speedLoopDirection = targetDirection;
-
-	/* 首次进入运行态时，斜坡从当前实际转速开始,避免给定阶跃。 */
+	/* 首次进入运行态时,斜坡从当前实际转速开始,避免给定阶跃。 */
 	if (speedLoopInited == 0)
 	{
 		speedLoopInited = 1;
@@ -204,10 +198,9 @@ void BLDC_SpeedPID(void)
 		speed_pid.PrevErr = 0.0f;
 	}
 
-	/* 外部观测转速保持带符号,反转时显示为负RPM。 */
+	/* 更新外部观测转速 */
 	BLDC_Info.RPM = speedRpmSigned;
-
-	/* 按当前目标缓慢调整斜坡给定 */
+	/* 速度斜坡增量 */
 	if (rampRef < speedRefAbs)
 	{
 		rampRef += SPEED_RAMP_RPM_PER_MS;
@@ -231,20 +224,20 @@ void BLDC_SpeedPID(void)
 	outMin = 0.0f;
 	outMax = SPEED_PID_LIMIT;
 	out = Clampf(outUnlimited, outMin, outMax);
-
-	/* 只有未饱和或误差能把输出拉回线性区时才积分。 */
+	/* 输出限幅 */
 	integrate = ((outUnlimited > outMin) && (outUnlimited < outMax))
 				|| ((error > 0.0f) && (outUnlimited <= outMin))
 				|| ((error < 0.0f) && (outUnlimited >= outMax))
 				|| ((error < 0.0f) && (outUnlimited <= outMin));
 	if (integrate != 0)
 	{
+		/* 抗积分饱和 */
 		speed_pid.Integral += speed_pid.Ki * error * speed_pid.Ts;
 	}
 	speed_pid.Integral = Clampf(speed_pid.Integral, outMin, outMax);
 	speed_pid.PrevErr = error;
 
-	/* 超速时输出为零，速度环不主动输出负电流反拖。 */
+	/* 超速时输出为零,速度环不主动输出负电流减速电机 */
 	FOC_Info.Iq_Ref = out;
 }
 

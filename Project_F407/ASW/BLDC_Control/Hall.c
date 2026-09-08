@@ -194,7 +194,7 @@ void Hall_UpdateEdge(uint8_t hall_state, uint32_t hall_period)
 		speedFilterReset = 1;
 	}
 
-	/* 确认反转时一次累计两个扇区步进 */
+	/* 确认反转时,已经累计了两个扇区步进 */
 	hallStepDelta = (int32_t)dir * (confirmedReversal ? 2 : 1);
 	Hall_Info.hall_step_count += hallStepDelta;
 	Hall_Info.unwrapped_electrical_deg = (float)Hall_Info.hall_step_count * 60.0f;
@@ -226,14 +226,15 @@ void Hall_UpdateEdge(uint8_t hall_state, uint32_t hall_period)
 }
 void Hall_Interpolate(float Ts)
 {
+	/* 在两个霍尔边沿之间,对FOC电角度做连续插值的函数 */
+
 	if (!Hall_Info.initialized)
 	{
 		/* 尚未完成霍尔初始化，没有可用于插值的基准角度 */
 		return;
 	}
 
-	if ((SystemRunTime_1ms - Hall_Info.last_event_ms) >
-	    HALL_SPEED_TIMEOUT_MS)
+	if ((SystemRunTime_1ms - Hall_Info.last_event_ms) > HALL_SPEED_TIMEOUT_MS)
 	{
 		/* 长时间没有霍尔边沿说明电机已停转，只清零速度，不继续积分角度 */
 		Hall_Info.speed = 0.0f;
@@ -242,11 +243,11 @@ void Hall_Interpolate(float Ts)
 	}
 
 	/* θ(k+1) = θ(k) + ωe × Ts */
+	/*计算FOC所使用的电角度,使用speed避免因为低通滤波造成相位滞后 */
 	Hall_Info.angle += Hall_Info.speed * Ts;
 	/* Park变换使用的角度保持在一个电周期内 */
 	Hall_Info.angle = Angle_Normalize(Hall_Info.angle);
-
-	/* 使用滤波后的速度更新解包电角度，并换算为累计机械圈数 */
+	/* 计算相对机械圈数,使用滤波后的速度避免位置抖动 */
 	Hall_Info.unwrapped_electrical_deg += Hall_Info.speed_filter * (180.0f / PI) * Ts;
 	Hall_Info.position_turns = Hall_Info.unwrapped_electrical_deg / ((float)BLDC_POLE_PAIRS * 360.0f);
 }

@@ -18,9 +18,9 @@ extern "C" {
 
 #define Wc							(1000 * PI)		/* ωc */
 
-/* 位置环参数，Position_Ref 单位为机械圈数 */
-#define BLDC_POSITION_CURRENT		(1.2f)
-#define BLDC_POSITION_MAX_RPM		(150.0f)
+/* 位置环参数 */
+#define BLDC_POSITION_CURRENT			(1.2f)
+#define BLDC_POSITION_MAX_RPM			(150.0f)
 #define BLDC_POSITION_DEADBAND_TURNS	(7.0f / 360.0f)
 #define BLDC_POSITION_START_ANGLE_STEP	(0.05f)
 
